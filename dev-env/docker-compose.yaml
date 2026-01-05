@@ -1,0 +1,50 @@
+---
+services:
+
+  minio:
+    networks:
+      - freva-xarray
+    image: quay.io/minio/minio
+    hostname: minio
+    environment:
+       MINIO_ROOT_USER: minioadmin
+       MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address :9001
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 2s
+      timeout: 1s
+      retries: 30
+
+  setup-minio:
+    networks:
+      - freva-xarray
+    image: quay.io/minio/mc
+    environment:
+       MINIO_ROOT_USER: minioadmin
+       MINIO_ROOT_PASSWORD: minioadmin
+    hostname: minio-setup
+    volumes:
+      - ../data:/seed:ro
+      - ./setup-minio.sh:/usr/local/bin/setup-minio:ro
+    entrypoint: ["sh", "/usr/local/bin/setup-minio"]
+    depends_on:
+      minio:
+        condition: service_healthy
+  thredds:
+    image: unidata/thredds-docker:5.8
+    container_name: thredds
+    restart: unless-stopped
+    ports:
+      - "8088:8080"
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - ./thredds/content/catalog.xml:/usr/local/tomcat/content/thredds/catalog.xml
+      - ../data:/data:ro
+networks:
+  freva-xarray:
+    driver: bridge

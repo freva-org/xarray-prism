@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog name="Root catalog" version="1.0.0"
+         xmlns="http://www.unidata.ucar.edu/namespaces/thredds/InvCatalog/v1.0"
+         xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <service name="all" serviceType="Compound" base="">
+    <service name="odap" serviceType="OPENDAP"   base="/thredds/dodsC/"/>
+    <service name="http" serviceType="HTTPServer" base="/thredds/fileServer/"/>
+  </service>
+
+  <datasetScan name="All data"
+               path="alldata"
+               location="/data">
+    <metadata inherited="true">
+      <serviceName>all</serviceName>
+    </metadata>
+
+    <filter wildcard="*.nc"    atomic="true"/>
+    <filter wildcard="*.grib"  atomic="true"/>
+    <filter wildcard="*.grib2" atomic="true"/>
+  </datasetScan>
+
+</catalog>
