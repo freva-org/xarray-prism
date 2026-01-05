@@ -69,6 +69,8 @@
         needs: [tests, release-type-determination]
         if: needs.release-type-determination.outputs.is_prerelease == 'false'
         runs-on: ubuntu-latest
+        permissions:
+          id-token: write
         steps:
           - name: Checkout
             uses: actions/checkout@v4
@@ -96,6 +98,8 @@
         needs: [tests, release-type-determination]
         if: needs.release-type-determination.outputs.is_prerelease == 'true'
         runs-on: ubuntu-latest
+        permissions:
+          id-token: write
         steps:
           - name: Checkout
             uses: actions/checkout@v4
