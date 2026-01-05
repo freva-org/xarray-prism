@@ -21,6 +21,7 @@ from ._detection import (
 )
 from ._registry import registry
 from .entrypoint import FrevaBackendEntrypoint
+from _version import __version__
 
 __all__ = [
     "FrevaBackendEntrypoint",
