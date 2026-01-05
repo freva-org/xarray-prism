@@ -1,0 +1,172 @@
+---
+    name: Build and publish release
+    run-name: ${{ github.actor }} is preparing the next release
+    
+    permissions:
+      pull-requests: write
+      contents: write
+      packages: write
+    
+    "on":
+      workflow_dispatch:
+        inputs:
+          rc:
+            description: "Release candidate number for this release."
+            required: true
+            type: number
+      push:
+        tags:
+          - "v*.*.*"
+    
+    jobs:
+      release-type-determination:
+        name: Determine if tag is pre-release or not
+        runs-on: ubuntu-latest
+        outputs:
+          is_prerelease: ${{ steps.check-prerelease.outputs.is_prerelease }}
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+    
+          - name: Set up Python 3
+            uses: actions/setup-python@v4
+            with:
+              python-version: "3.x"
+    
+          - name: Installing dependencies
+            run: pip install git-python packaging tomli requests
+    
+          - name: Getting release job
+            run: curl -Ls -o rc.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
+    
+          - name: Check if tag is a pre-release
+            id: check-prerelease
+            run: |
+              RC="${{ github.event_name == 'workflow_dispatch' && inputs.rc || '' }}"
+              IS_PRERELEASE="false"
+              if [ "$RC" ]; then
+                 python3 rc.py rc $RC freva_xarray -p . 1> tag.txt
+                 IS_PRERELEASE="true"
+              else
+                python3 -c "from freva_xarray import __version__; print(__version__)" 1> tag.txt
+              fi
+              echo "$IS_PRERELEASE" > is_prerelease.txt
+              echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
+    
+          - name: Upload Outputs
+            uses: actions/upload-artifact@v4
+            with:
+              name: release-metadata
+              path: |
+                tag.txt
+                is_prerelease.txt
+    
+      tests:
+        uses: ./.github/workflows/ci_job.yml
+    
+      pypi:
+        name: Publish to PyPI
+        needs: [tests, release-type-determination]
+        if: needs.release-type-determination.outputs.is_prerelease == 'false'
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+    
+          - name: Setup Python
+            uses: actions/setup-python@v4
+            with:
+              python-version: "3.x"
+    
+          - name: Install build tools
+            run: python -m pip install build
+    
+          - name: Build package
+            run: python -m build
+    
+          - name: Publish to PyPI
+            uses: pypa/gh-action-pypi-publish@release/v1
+            with:
+              password: ${{ secrets.PYPI_API_TOKEN }}
+              skip-existing: true
+              verbose: true
+    
+      pypi-prerelease:
+        name: Publish pre-release to PyPI
+        needs: [tests, release-type-determination]
+        if: needs.release-type-determination.outputs.is_prerelease == 'true'
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+    
+          - name: Download Release Metadata
+            uses: actions/download-artifact@v4
+            with:
+              name: release-metadata
+    
+          - name: Read tag version
+            run: |
+              TAG=$(tail -1 tag.txt)
+              echo "TAG=$TAG" >> $GITHUB_ENV
+    
+          - name: Setup Python
+            uses: actions/setup-python@v4
+            with:
+              python-version: "3.x"
+    
+          - name: Install build tools
+            run: python -m pip install build tomli
+    
+          - name: Update version for pre-release
+            run: |
+              python3 -c "
+              import tomli
+              with open('pyproject.toml', 'rb') as f:
+                  data = tomli.load(f)
+              content = open('pyproject.toml').read()
+              old_version = data['project']['version']
+              content = content.replace(f'version = \"{old_version}\"', f'version = \"${{ env.TAG }}\"')
+              with open('pyproject.toml', 'w') as f:
+                  f.write(content)
+              "
+    
+          - name: Build package
+            run: python -m build
+    
+          - name: Publish to PyPI
+            uses: pypa/gh-action-pypi-publish@release/v1
+            with:
+              password: ${{ secrets.PYPI_API_TOKEN }}
+              skip-existing: true
+              verbose: true
+    
+      github-release:
+        name: Create GitHub Release
+        needs: [tests, release-type-determination]
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+    
+          - name: Download Release Metadata
+            uses: actions/download-artifact@v4
+            with:
+              name: release-metadata
+    
+          - name: Read Metadata
+            run: |
+              TAG=$(tail -1 tag.txt)
+              IS_PRERELEASE=$(tail -1 is_prerelease.txt)
+              echo "TAG=$TAG" >> $GITHUB_ENV
+              echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+    
+          - name: Create GitHub Release
+            uses: softprops/action-gh-release@v1
+            with:
+              tag_name: v${{ env.TAG }}
+              name: Release v${{ env.TAG }}
+              prerelease: ${{ env.IS_PRERELEASE == 'true' }}
+              generate_release_notes: true
+            env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
