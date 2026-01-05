@@ -48,7 +48,7 @@
                  python3 rc.py rc $RC freva_xarray -p . 1> tag.txt
                  IS_PRERELEASE="true"
               else
-                python3 -c "from freva_xarray import __version__; print(__version__)" 1> tag.txt
+                 python3 -c "exec(open('src/freva_xarray/_version.py').read()); print(__version__)"
               fi
               echo "$IS_PRERELEASE" > is_prerelease.txt
               echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
