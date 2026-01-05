@@ -83,7 +83,7 @@ jobs:
 
       - name: Run tests
         shell: bash -l {0}
-        run: tox -e test
+        run: VIRTUALENV_SYSTEM_SITE_PACKAGES=1 tox -e test
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.12'
