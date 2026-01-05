@@ -157,13 +157,15 @@
             uses: actions/download-artifact@v4
             with:
               name: release-metadata
+              path: release-metadata
 
           - name: Read Metadata
+            shell: bash
             run: |
-              TAG=$(tail -1 tag.txt)
-              IS_PRERELEASE=$(tail -1 is_prerelease.txt)
-              echo "TAG=$TAG" >> $GITHUB_ENV
-              echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
+              TAG="$(tail -n 1 release-metadata/tag.txt)"
+              IS_PRERELEASE="$(tail -n 1 release-metadata/is_prerelease.txt)"
+              echo "TAG=$TAG" >> "$GITHUB_ENV"
+              echo "IS_PRERELEASE=$IS_PRERELEASE" >> "$GITHUB_ENV"
 
           - name: Create GitHub Release
             uses: softprops/action-gh-release@v1
