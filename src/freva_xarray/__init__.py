@@ -13,8 +13,6 @@
 # cfgrib and scipy typically must read the entire file (and build
 # its index) even when only a small subset is requested.
 
-from _version import __version__  # noqa
-
 from ._detection import (
     detect_engine,
     detect_uri_type,
@@ -22,6 +20,7 @@ from ._detection import (
     register_uri_type,
 )
 from ._registry import registry
+from ._version import __version__  # noqa
 from .entrypoint import FrevaBackendEntrypoint
 
 __all__ = [
