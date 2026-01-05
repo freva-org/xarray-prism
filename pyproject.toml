@@ -139,8 +139,8 @@ commands =
 
 [testenv:lint]
 description = "Check code quality."
+skip_install = true
 deps =
-    -e .
     black
     isort
     flake8
@@ -153,8 +153,8 @@ commands =
 
 [testenv:types]
 description = "Static type checking."
+skip_install = true
 deps =
-    -e .
     mypy
     types-setuptools
 commands =
