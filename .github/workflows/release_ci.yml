@@ -87,7 +87,7 @@
           - name: Publish to PyPI
             uses: pypa/gh-action-pypi-publish@release/v1
             with:
-              password: ${{ secrets.PYPI_API_TOKEN }}
+              password: ${{ secrets.TEST_PYPI_TOKEN }}
               skip-existing: true
               verbose: true
     
@@ -130,17 +130,17 @@
               with open('pyproject.toml', 'w') as f:
                   f.write(content)
               "
-    
+
           - name: Build package
             run: python -m build
-    
+
           - name: Publish to PyPI
             uses: pypa/gh-action-pypi-publish@release/v1
             with:
-              password: ${{ secrets.PYPI_API_TOKEN }}
+              password: ${{ secrets.TEST_PYPI_TOKEN }}
               skip-existing: true
               verbose: true
-    
+
       github-release:
         name: Create GitHub Release
         needs: [tests, release-type-determination]
@@ -148,19 +148,19 @@
         steps:
           - name: Checkout
             uses: actions/checkout@v4
-    
+
           - name: Download Release Metadata
             uses: actions/download-artifact@v4
             with:
               name: release-metadata
-    
+
           - name: Read Metadata
             run: |
               TAG=$(tail -1 tag.txt)
               IS_PRERELEASE=$(tail -1 is_prerelease.txt)
               echo "TAG=$TAG" >> $GITHUB_ENV
               echo "IS_PRERELEASE=$IS_PRERELEASE" >> $GITHUB_ENV
-    
+
           - name: Create GitHub Release
             uses: softprops/action-gh-release@v1
             with:
