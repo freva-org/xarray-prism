@@ -118,8 +118,11 @@ setenv =
     MINIO_SECRET_KEY = minioadmin
     THREDDS_ENDPOINT = http://localhost:8088
 deps =
-    -e .[dev]
+    pytest
+    pytest-cov
     pytest-env
+commands_pre =
+    python -m pip install --no-deps -e .
 commands =
     python3 -m pytest -vv tests/ {posargs}
 
