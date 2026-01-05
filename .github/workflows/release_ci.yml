@@ -62,7 +62,7 @@
                 is_prerelease.txt
     
       tests:
-        uses: ./.github/workflows/ci_job.yml
+        uses: ./.github/workflows/tests_ci.yml
     
       pypi:
         name: Publish to PyPI
