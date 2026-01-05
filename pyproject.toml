@@ -197,7 +197,7 @@ deps =
     requests
     tomli
 commands =
-    python3 bump.py deploy freva_xarray -p . -v
+    python3 bump.py deploy freva_xarray -p .
 allowlist_externals =
     rm
     curl

@@ -22,7 +22,6 @@ from ._detection import (
 from ._registry import registry
 from .entrypoint import FrevaBackendEntrypoint
 
-__version__ = "0.1.0"
 __all__ = [
     "FrevaBackendEntrypoint",
     "detect_engine",
