@@ -56,6 +56,8 @@ Source = "https://github.com/freva-org/freva-xarray/"
 # IMPORTANT: Register as xarray backend, auto-discovered by xarray
 [project.entry-points."xarray.backends"]
 freva = "freva_xarray.entrypoint:FrevaBackendEntrypoint"
+[tool.codespell]
+ignore-words-list = "iterm"
 [tool.setuptools.dynamic]
 version = {attr = "freva_xarray._version.__version__"}
 [tool.setuptools.packages.find]

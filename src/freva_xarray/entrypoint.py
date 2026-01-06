@@ -120,7 +120,7 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
 
         if engine is None:
             if is_remote:
-                from urllib.parse import urlparse, urlencode
+                from urllib.parse import urlencode, urlparse
 
                 filename = Path(urlparse(uri).path).name
                 if len(filename) > 50:
