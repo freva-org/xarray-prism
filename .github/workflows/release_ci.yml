@@ -48,7 +48,7 @@
                  python3 rc.py rc $RC freva_xarray -p . 1> tag.txt
                  IS_PRERELEASE="true"
               else
-                 python3 -c "exec(open('src/freva_xarray/_version.py').read()); print(__version__)"
+                 python3 -c "exec(open('src/freva_xarray/_version.py').read()); print(__version__)" 1> tag.txt
               fi
               echo "$IS_PRERELEASE" > is_prerelease.txt
               echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
@@ -116,16 +116,7 @@
     
           - name: Update version for pre-release
             run: |
-              python3 -c "
-              import tomli
-              with open('pyproject.toml', 'rb') as f:
-                  data = tomli.load(f)
-              content = open('pyproject.toml').read()
-              old_version = data['project']['version']
-              content = content.replace(f'version = \"{old_version}\"', f'version = \"${{ env.TAG }}\"')
-              with open('pyproject.toml', 'w') as f:
-                  f.write(content)
-              "
+              sed -i "s/__version__ = .*/__version__ = \"${{ env.TAG }}\"/" src/freva_xarray/_version.py
 
           - name: Build package
             run: python -m build

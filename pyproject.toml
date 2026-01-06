@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "freva-xarray"
-version = "2512.0.0"
+dynamic = ["version"]
 description = "A multi-format and multi-storage xarray engine with automatic engine detection, and ability to register new data format and uri type for climate data."
 readme = "README.md"
 authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
@@ -56,7 +56,8 @@ Source = "https://github.com/freva-org/freva-xarray/"
 # IMPORTANT: Register as xarray backend, auto-discovered by xarray
 [project.entry-points."xarray.backends"]
 freva = "freva_xarray.entrypoint:FrevaBackendEntrypoint"
-
+[tool.setuptools.dynamic]
+version = {attr = "freva_xarray._version.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["freva_xarray*"]
