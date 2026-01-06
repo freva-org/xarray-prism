@@ -160,6 +160,13 @@ def _detect_from_uri_pattern(lower_uri: str) -> Optional[str]:
     if lower_uri.endswith(".zarr") or ".zarr/" in lower_uri:
         return "zarr"
 
+    # THREDDS NCSS with explicit accept format (overrides file extension)
+    if "/ncss/" in lower_uri or "/ncss?" in lower_uri:
+        if "accept=netcdf3" in lower_uri:
+            return "scipy"
+        if "accept=netcdf4" in lower_uri or "accept=netcdf" in lower_uri:
+            return "h5netcdf"
+
     # OPeNDAP / DODS URL detection
     opendap_patterns = ("/dodsc/", "/dods/", "/opendap/", "thredds/dodsc")
     if any(t in lower_uri for t in opendap_patterns):

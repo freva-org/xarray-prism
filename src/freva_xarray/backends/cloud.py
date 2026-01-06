@@ -8,6 +8,7 @@ import tempfile
 from hashlib import md5
 from pathlib import Path
 from typing import Any, Dict, Optional
+from urllib.parse import urlparse
 
 import fsspec
 import xarray as xr
@@ -45,7 +46,9 @@ def _cache_remote_file(
 ) -> str:
     """Cache remote file to local"""
     cache_root = _get_cache_dir(storage_options)
-    cache_name = md5(uri.encode()).hexdigest() + "_" + Path(uri).name
+    parsed = urlparse(uri)
+    filename = Path(parsed.path).name
+    cache_name = md5(uri.encode()).hexdigest() + "_" + filename
     local_path = cache_root / cache_name
 
     if local_path.exists():
