@@ -3,6 +3,7 @@ automatic format detection."""
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
@@ -19,6 +20,41 @@ from ._detection import (
 )
 from ._registry import registry
 from .backends import open_cloud, open_posix
+
+
+def _supports_hyperlinks() -> bool:
+    """Check if terminal supports OSC 8 hyperlinks.
+    based on https://github.com/Alhadis/OSC8-Adoption
+    most of frequently used terminals are covered.
+    """
+    # Not a TTY, no hyperlinks
+    if not sys.stderr.isatty():
+        return False
+    # Windows Terminal
+    if os.environ.get("WT_SESSION"):
+        return True
+    if os.environ.get("TERM_PROGRAM") in ("vscode", "iTerm.app", "WezTerm"):
+        return True
+    # Modern terminals with truecolor support
+    if os.environ.get("COLORTERM") == "truecolor":
+        return True
+    # KDE Konsole
+    if os.environ.get("KONSOLE_VERSION"):
+        return True
+    # GNOME Terminal
+    if os.environ.get("VTE_VERSION"):
+        try:
+            return int(os.environ["VTE_VERSION"]) >= 5000
+        except ValueError:
+            pass
+    return False
+
+
+def _make_link(url: str, text: str) -> str:
+    """Create clickable link if supported, otherwise full URL."""
+    if _supports_hyperlinks():
+        return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+    return url
 
 
 class FrevaBackendEntrypoint(BackendEntrypoint):
@@ -84,9 +120,9 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
 
         if engine is None:
             if is_remote:
-                from urllib.parse import urlencode
+                from urllib.parse import urlparse, urlencode
 
-                filename = Path(uri).name
+                filename = Path(urlparse(uri).path).name
                 if len(filename) > 50:
                     filename = filename[:47] + "..."
 
@@ -102,14 +138,12 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
                 )
 
                 issue_url = f"{self.url}/issues/new?{issue_params}"
-                report = (
-                    f"\033]8;;{issue_url}\033\\🔗 Click here to report\033]8;;\033\\"
-                )
+                link = _make_link(issue_url, "🔗 Click here to report")
 
                 raise ValueError(
                     f"Freva Xarray: cannot detect format for {uri!r}\n\n"
                     f"  💡 Help us improve! This takes 10 seconds:\n"
-                    f"     {report}\n\n"
+                    f"     {link}\n\n"
                     f"  Or specify manually if you know the engine already:\n"
                     f"     xarray.open_dataset(uri, engine='ENGINE_NAME')\n"
                 )
