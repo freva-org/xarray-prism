@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "freva-xarray"
+name = "xarray-prism"
 dynamic = ["version"]
 description = "A multi-format and multi-storage xarray engine with automatic engine detection, and ability to register new data format and uri type for climate data."
 readme = "README.md"
@@ -50,19 +50,19 @@ dev = [
 ]
 
 [project.urls]
-Issues = "https://github.com/freva-org/freva-xarray/issues"
-Source = "https://github.com/freva-org/freva-xarray/"
+Issues = "https://github.com/freva-org/xarray-prism/issues"
+Source = "https://github.com/freva-org/xarray-prism/"
 
 # IMPORTANT: Register as xarray backend, auto-discovered by xarray
 [project.entry-points."xarray.backends"]
-freva = "freva_xarray.entrypoint:FrevaBackendEntrypoint"
+freva = "xarray_prism.entrypoint:FrevaBackendEntrypoint"
 [tool.codespell]
 ignore-words-list = "iterm"
 [tool.setuptools.dynamic]
-version = {attr = "freva_xarray._version.__version__"}
+version = {attr = "xarray_prism._version.__version__"}
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["freva_xarray*"]
+include = ["xarray_prism*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -84,7 +84,7 @@ python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-files = "src/freva_xarray"
+files = "src/xarray_prism"
 strict = false
 follow_imports = "silent"
 
@@ -95,7 +95,7 @@ target-version = ["py39", "py310", "py311", "py312", "py313", "py314"]
 [tool.isort]
 profile = "black"
 line_length = 88
-known_first_party = ["freva_xarray"]
+known_first_party = ["xarray_prism"]
 
 [tool.flake8]
 ignore = ["F405", "F403", "E704", "W503", "C901"]
@@ -140,7 +140,7 @@ deps =
     -e .[dev]
     pytest-env
 commands =
-    python3 -m pytest -vv --cov=freva_xarray --cov-report=html:coverage_report --cov-report=xml --junitxml=report.xml tests/ {posargs}
+    python3 -m pytest -vv --cov=xarray_prism --cov-report=html:coverage_report --cov-report=xml --junitxml=report.xml tests/ {posargs}
     python3 -m coverage report --fail-under=80 --precision=2
 
 [testenv:lint]
@@ -152,10 +152,10 @@ deps =
     flake8
     codespell
 commands =
-    python3 -m isort --check --profile black -t py39 -l 88 src/freva_xarray
-    python3 -m black --check src/freva_xarray tests
-    python3 -m flake8 src/freva_xarray --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
-    codespell --quiet-level=2 src/freva_xarray
+    python3 -m isort --check --profile black -t py39 -l 88 src/xarray_prism
+    python3 -m black --check src/xarray_prism tests
+    python3 -m flake8 src/xarray_prism --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
+    codespell --quiet-level=2 src/xarray_prism
 
 [testenv:types]
 description = "Static type checking."
@@ -164,7 +164,7 @@ deps =
     mypy
     types-setuptools
 commands =
-    python3 -m mypy src/freva_xarray --ignore-missing-imports
+    python3 -m mypy src/xarray_prism --ignore-missing-imports
 
 [testenv:format]
 description = "Auto-format code."
@@ -172,8 +172,8 @@ deps =
     black
     isort
 commands =
-    python3 -m isort --profile black -t py39 -l 88 src/freva_xarray tests
-    python3 -m black src/freva_xarray tests
+    python3 -m isort --profile black -t py39 -l 88 src/xarray_prism tests
+    python3 -m black src/xarray_prism tests
 
 [testenv:release]
 description = "Tag a new release."
@@ -183,7 +183,7 @@ deps =
     requests
     tomli
 commands =
-    python3 bump.py tag freva_xarray -p .
+    python3 bump.py tag xarray_prism -p .
 allowlist_externals =
     rm
     curl
@@ -200,7 +200,7 @@ deps =
     requests
     tomli
 commands =
-    python3 bump.py deploy freva_xarray -p .
+    python3 bump.py deploy xarray_prism -p .
 allowlist_externals =
     rm
     curl

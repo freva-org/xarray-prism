@@ -9,8 +9,8 @@ from unittest.mock import patch
 import pytest
 import xarray as xr
 
-from freva_xarray import FrevaBackendEntrypoint
-from freva_xarray._registry import registry
+from xarray_prism import FrevaBackendEntrypoint
+from xarray_prism._registry import registry
 
 
 class TestFrevaBackendEntrypoint:
@@ -186,7 +186,7 @@ class TestFrevaBackendEntrypoint:
         self, entrypoint: FrevaBackendEntrypoint
     ):
         """Should raise helpful error for custom uri_type without handler."""
-        from freva_xarray._detection import register_uri_type, unregister_uri_type
+        from xarray_prism._detection import register_uri_type, unregister_uri_type
 
         @register_uri_type(priority=100)
         def detect_tape(uri: str):
@@ -245,7 +245,7 @@ class TestCustomRegistry:
 
     def test_custom_handler_used_by_entrypoint(self):
         """Custom handlers should be used by the entrypoint."""
-        from freva_xarray._detection import register_detector, unregister_detector
+        from xarray_prism._detection import register_detector, unregister_detector
 
         @register_detector(priority=200)
         def detect_myformat(uri):
@@ -277,7 +277,7 @@ class TestCustomRegistry:
 
     def test_custom_uri_type_with_handler(self):
         """Custom URI type with registered handler should work."""
-        from freva_xarray._detection import register_uri_type, unregister_uri_type
+        from xarray_prism._detection import register_uri_type, unregister_uri_type
 
         @register_uri_type(priority=100)
         def detect_tape(uri: str):

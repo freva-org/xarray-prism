@@ -5,7 +5,7 @@ and ability to register new data format and uri type for climate data.
 
 > [!Important]
 > If you deal with a data that `freva` engine is not able to open that, please
-> report the data [here](https://github.com/freva-org/freva-xarray/issues/new)
+> report the data [here](https://github.com/freva-org/xarray-prism/issues/new)
 > to let us improve this engine to be able to be versitile and work with all
 > sort of climate data.
 
@@ -15,13 +15,13 @@ and ability to register new data format and uri type for climate data.
 ### Install via PyPI
 
 ```bash
-pip install freva-xarray
+pip install xarray-prism
 ```
 
 ### Install via Conda
 
 ```bash
-conda install freva-xarray
+conda install xarray-prism
 ```
 
 ## Quick Start
@@ -138,14 +138,14 @@ xr.open_dataset(
 > 
 > Unlike Zarr or HDF5, these formats don't support partial/chunk reads over the network.
 > 
-> By default, freva-xarray caches files in the system temp directory. 
+> By default, xarray-prism caches files in the system temp directory. 
 > This works well for most cases. 
 > If temp storage is a concern (e.g., limited space or cleared on reboot), 
 > you can specify a persistent cache:
 > 
 > | Option | How |
 > |--------|-----|
-> | Environment variable | `export FREVA_XARRAY_CACHE=/path/to/cache` |
+> | Environment variable | `export xarray_prism_CACHE=/path/to/cache` |
 > | Per-call | `storage_options={"simplecache": {"cache_storage": "/path"}}` |
 > | Default | System temp directory |
 
@@ -154,13 +154,13 @@ xr.open_dataset(
 
 ### Custom Format Detectors and URI Types
 
-You can extend **freva-xarray** with custom *format detectors*, *URI types*, and *open handlers* by providing a small plugin package.
+You can extend **xarray-prism** with custom *format detectors*, *URI types*, and *open handlers* by providing a small plugin package.
 Registration happens **at import time**, so importing the plugin activates it.
 
 ### Plugin structure
 
 ```text
-freva_xarray_myplugin/
+xarray_prism_myplugin/
   __init__.py   # imports the plugin module (triggers registration)
   plugin.py     # detectors, URI types, and open handlers
 pyproject.toml
@@ -168,17 +168,17 @@ pyproject.toml
 
 ### Plugin implementation
 
-`freva_xarray_myplugin/__init__.py`
+`xarray_prism_myplugin/__init__.py`
 
 ```python
 from .plugin import *  # noqa: F401,F403
 ```
 
-`freva_xarray_myplugin/plugin.py`
+`xarray_prism_myplugin/plugin.py`
 
 ```python
 import xarray as xr
-from freva_xarray import register_detector, register_uri_type, registry
+from xarray_prism import register_detector, register_uri_type, registry
 
 
 @register_uri_type(priority=100)
@@ -210,12 +210,12 @@ def open_foo_from_myfs(uri: str, **kwargs):
 
 ```toml
 [project]
-name = "freva-xarray-myplugin"
+name = "xarray-prism-myplugin"
 version = "0.1.0"
-dependencies = ["freva-xarray"]
+dependencies = ["xarray-prism"]
 
-[project.entry-points."freva_xarray.plugins"]
-myplugin = "freva_xarray_myplugin"
+[project.entry-points."xarray_prism.plugins"]
+myplugin = "xarray_prism_myplugin"
 ```
 
 ### Using the plugin
@@ -223,7 +223,7 @@ myplugin = "freva_xarray_myplugin"
 After installing the plugin package, **import it once** to activate the registrations:
 
 ```python
-import freva_xarray_myplugin  # activates detectors and handlers
+import xarray_prism_myplugin  # activates detectors and handlers
 
 import xarray as xr
 ds = xr.open_dataset("myfs://bucket/path/data.foo", engine="freva")
@@ -239,8 +239,8 @@ ds = xr.open_dataset("myfs://bucket/path/data.foo", engine="freva")
 docker-compose -f dev-env/docker-compose.yaml up -d --remove-orphans
 
 # Create conda environment
-conda create -n freva-xarray python=3.12 -y
-conda activate freva-xarray
+conda create -n xarray-prism python=3.12 -y
+conda activate xarray-prism
 
 # Install package in editable mode with dev dependencies
 pip install -e ".[dev]"

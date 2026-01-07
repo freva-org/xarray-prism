@@ -41,7 +41,7 @@ jobs:
         uses: mamba-org/setup-micromamba@v1
         with:
           micromamba-version: "latest"
-          environment-name: freva-xarray
+          environment-name: xarray-prism
           cache-environment: true
           cache-downloads: true
           create-args: >-

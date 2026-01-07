@@ -73,7 +73,7 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
         "and entrypoint registry for new formats and URI types."
     )
 
-    url = "https://github.com/freva-org/freva-xarray"
+    url = "https://github.com/freva-org/xarray-prism"
     open_dataset_parameters = ("filename_or_obj", "drop_variables")
 
     ENGINE_MAP: Dict[str, str] = {

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from freva_xarray._detection import (
+from xarray_prism._detection import (
     detect_engine,
     detect_uri_type,
     is_http_url,
@@ -199,7 +199,7 @@ class TestCustomDetectors:
 
     def test_unknown_engine_warning(self):
         """Custom detector returning unknown engine should warn."""
-        from freva_xarray import FrevaBackendEntrypoint
+        from xarray_prism import FrevaBackendEntrypoint
         import warnings
 
         @register_detector(priority=100)

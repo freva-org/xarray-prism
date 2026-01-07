@@ -45,10 +45,10 @@
               RC="${{ github.event_name == 'workflow_dispatch' && inputs.rc || '' }}"
               IS_PRERELEASE="false"
               if [ "$RC" ]; then
-                 python3 rc.py rc $RC freva_xarray -p . 1> tag.txt
+                 python3 rc.py rc $RC xarray_prism -p . 1> tag.txt
                  IS_PRERELEASE="true"
               else
-                 python3 -c "exec(open('src/freva_xarray/_version.py').read()); print(__version__)" 1> tag.txt
+                 python3 -c "exec(open('src/xarray_prism/_version.py').read()); print(__version__)" 1> tag.txt
               fi
               echo "$IS_PRERELEASE" > is_prerelease.txt
               echo "is_prerelease=$IS_PRERELEASE" >> "$GITHUB_OUTPUT"
@@ -116,7 +116,7 @@
     
           - name: Update version for pre-release
             run: |
-              sed -i "s/__version__ = .*/__version__ = \"${{ env.TAG }}\"/" src/freva_xarray/_version.py
+              sed -i "s/__version__ = .*/__version__ = \"${{ env.TAG }}\"/" src/xarray_prism/_version.py
 
           - name: Build package
             run: python -m build

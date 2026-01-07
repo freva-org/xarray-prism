@@ -3,7 +3,7 @@ services:
 
   minio:
     networks:
-      - freva-xarray
+      - xarray-prism
     image: quay.io/minio/minio
     hostname: minio
     environment:
@@ -21,7 +21,7 @@ services:
 
   setup-minio:
     networks:
-      - freva-xarray
+      - xarray-prism
     image: quay.io/minio/mc
     environment:
        MINIO_ROOT_USER: minioadmin
@@ -46,5 +46,5 @@ services:
       - ./thredds/content/catalog.xml:/usr/local/tomcat/content/thredds/catalog.xml
       - ../data:/data:ro
 networks:
-  freva-xarray:
+  xarray-prism:
     driver: bridge

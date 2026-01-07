@@ -18,7 +18,7 @@ from ..utils import ProgressBar, gdal_env
 
 def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
     """Get cache directory."""
-    env_cache = os.environ.get("FREVA_XARRAY_CACHE")
+    env_cache = os.environ.get("XARRAY_PRISM_CACHE")
     # 1. Environment variable
     if env_cache:
         cache_root = Path(env_cache)
@@ -32,7 +32,7 @@ def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
             cache_root.mkdir(parents=True, exist_ok=True)
             return cache_root
     # 3. Default temp directory
-    cache_root = Path(tempfile.gettempdir()) / "freva-xarray-cache"
+    cache_root = Path(tempfile.gettempdir()) / "xarray-prism-cache"
     cache_root.mkdir(parents=True, exist_ok=True)
     return cache_root
 

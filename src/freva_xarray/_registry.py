@@ -1,4 +1,4 @@
-"""Registry for custom backends for freva_xarray."""
+"""Registry for custom backends for xarray_prism."""
 
 from __future__ import annotations
 

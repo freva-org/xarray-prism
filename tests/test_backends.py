@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import xarray as xr
 
-from freva_xarray.backends import open_cloud, open_posix
+from xarray_prism.backends import open_cloud, open_posix
 
 
 class TestPosixBackend:
@@ -106,7 +106,7 @@ class TestCloudBackend:
     def test_open_grib_from_s3_with_cache(self, s3_env: dict, temp_cache_dir: Path):
         """Open a GRIB file from S3 with local caching."""
         uri = "s3://testdata/test.grib2"
-        os.environ["FREVA_XARRAY_CACHE"] = str(temp_cache_dir)
+        os.environ["xarray_prism_CACHE"] = str(temp_cache_dir)
 
         try:
             ds = open_cloud(
@@ -128,7 +128,7 @@ class TestCloudBackend:
                 pytest.skip(f"S3/cfgrib setup issue: {e}")
             raise
         finally:
-            os.environ.pop("FREVA_XARRAY_CACHE", None)
+            os.environ.pop("xarray_prism_CACHE", None)
 
     @pytest.mark.requires_minio
     def test_open_geotiff_from_s3(self, s3_env: dict):
@@ -172,18 +172,18 @@ class TestCacheConfiguration:
 
     def test_cache_dir_from_env(self, temp_cache_dir: Path):
         """Cache directory should be configurable via environment."""
-        from freva_xarray.backends.cloud import _get_cache_dir
+        from xarray_prism.backends.cloud import _get_cache_dir
 
-        os.environ["FREVA_XARRAY_CACHE"] = str(temp_cache_dir)
+        os.environ["xarray_prism_CACHE"] = str(temp_cache_dir)
         try:
             cache_dir = _get_cache_dir()
             assert cache_dir == temp_cache_dir
         finally:
-            os.environ.pop("FREVA_XARRAY_CACHE", None)
+            os.environ.pop("xarray_prism_CACHE", None)
 
     def test_cache_dir_from_storage_options(self, temp_cache_dir: Path):
         """Cache directory should be configurable via storage_options."""
-        from freva_xarray.backends.cloud import _get_cache_dir
+        from xarray_prism.backends.cloud import _get_cache_dir
 
         storage_options = {
             "simplecache": {"cache_storage": str(temp_cache_dir)},
@@ -193,11 +193,11 @@ class TestCacheConfiguration:
 
     def test_cache_dir_default(self):
         """Default cache should be in temp directory."""
-        from freva_xarray.backends.cloud import _get_cache_dir
+        from xarray_prism.backends.cloud import _get_cache_dir
         import tempfile
 
-        os.environ.pop("FREVA_XARRAY_CACHE", None)
+        os.environ.pop("xarray_prism_CACHE", None)
 
         cache_dir = _get_cache_dir()
         assert cache_dir.parent == Path(tempfile.gettempdir())
-        assert "freva-xarray-cache" in str(cache_dir)
+        assert "xarray-prism-cache" in str(cache_dir)
