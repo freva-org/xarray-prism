@@ -1,4 +1,4 @@
-"""Freva xarray backend entrypoint with
+"""Xarray Prism backend entrypoint with
 automatic format detection."""
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ def _make_link(url: str, text: str) -> str:
     return url
 
 
-class FrevaBackendEntrypoint(BackendEntrypoint):
+class PrismBackendEntrypoint(BackendEntrypoint):
     """
     Multi-format backend with automatic engine detection for climate data.
 
@@ -69,7 +69,7 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
     """
 
     description = (
-        "Freva multi-format/multi-storage engine with auto-detection"
+        "Prism multi-format/multi-storage engine with auto-detection"
         "and entrypoint registry for new formats and URI types."
     )
 
@@ -96,7 +96,7 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
         automatic format detection."""
         if not isinstance(filename_or_obj, (str, Path)):
             raise ValueError(
-                f"Freva backend requires a file path or URL, "
+                f"Prism backend requires a file path or URL, "
                 f"got {type(filename_or_obj).__name__}"
             )
 
@@ -141,7 +141,7 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
                 link = _make_link(issue_url, "🔗 Click here to report")
 
                 raise ValueError(
-                    f"Freva Xarray: cannot detect format for {uri!r}\n\n"
+                    f"Xarray Prism: cannot detect format for {uri!r}\n\n"
                     f"  💡 Help us improve! This takes 10 seconds:\n"
                     f"     {link}\n\n"
                     f"  Or specify manually if you know the engine already:\n"
@@ -149,12 +149,12 @@ class FrevaBackendEntrypoint(BackendEntrypoint):
                 )
             else:
                 raise ValueError(
-                    f"Freva Xarray: cannot detect format for {uri!r}\n"
+                    f"Xarray Prism: cannot detect format for {uri!r}\n"
                     f"  Specify manually: "
                     f"  xarray.open_dataset(uri, engine='ENGINE_NAME')"
                 )
 
-        # Pop freva-specific kwargs
+        # Pop prism-specific kwargs
         kwargs.pop("xarray_engine", None)
         backend_kwargs = kwargs.pop("backend_kwargs", None) or {}
 

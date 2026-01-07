@@ -1,10 +1,10 @@
-# Freva xarray Engine
+# Xarray Prism Engine
 
 A multi-format and multi-storage xarray engine with automatic engine detection,
 and ability to register new data format and uri type for climate data.
 
 > [!Important]
-> If you deal with a data that `freva` engine is not able to open that, please
+> If you deal with a data that `prism` engine is not able to open that, please
 > report the data [here](https://github.com/freva-org/xarray-prism/issues/new)
 > to let us improve this engine to be able to be versitile and work with all
 > sort of climate data.
@@ -32,12 +32,12 @@ conda install xarray-prism
 import xarray as xr
 
 # Auto-detect format
-ds = xr.open_dataset("my_data.unknown_fmt", engine="freva")
+ds = xr.open_dataset("my_data.unknown_fmt", engine="prism")
 
 # Remote Zarr on S3
 ds = xr.open_dataset(
     "s3://freva/workshop/tas.zarr",
-    engine="freva",
+    engine="prism",
     storage_options={
         "anon": True,
         "client_kwargs": {
@@ -49,7 +49,7 @@ ds = xr.open_dataset(
 # Remote NetCDF3 on S3
 ds = xr.open_dataset(
     "s3://freva/workshop/tas.nc",
-    engine="freva",
+    engine="prism",
     storage_options={
         "anon": True,
         "client_kwargs": {
@@ -61,7 +61,7 @@ ds = xr.open_dataset(
 # Remote NetCDF4 on S3
 ds = xr.open_dataset(
     "s3://freva/workshop/tas.nc4",
-    engine="freva",
+    engine="prism",
     storage_options={
         "anon": True,
         "client_kwargs": {
@@ -73,7 +73,7 @@ ds = xr.open_dataset(
 # Remote Zarr on S3 - non-anon
 ds = xr.open_dataset(
     "s3://bucket/data.zarr",
-    engine="freva",
+    engine="prism",
     storage_options={
         "key": "YOUR_KEY",
         "secret": "YOUR_SECRET",
@@ -86,19 +86,19 @@ ds = xr.open_dataset(
 # OPeNDAP from THREDDS
 ds = xr.open_dataset(
     "https://icdc.cen.uni-hamburg.de/thredds/dodsC/ftpthredds/ar5_sea_level_rise/gia_mean.nc",
-    engine="freva"
+    engine="prism"
 )
 
 # Local GRIB file
-ds = xr.open_dataset("forecast.grib2", engine="freva")
+ds = xr.open_dataset("forecast.grib2", engine="prism")
 
 # GeoTIFF
-ds = xr.open_dataset("satellite.tif", engine="freva")
+ds = xr.open_dataset("satellite.tif", engine="prism")
 
 # tip: Handle the cache manually by yourself
 xr.open_dataset(
     "simplecache::s3://bucket/file.nc3",
-    engine="freva",
+    engine="prism",
     storage_options={
         "s3": {"anon": True, "client_kwargs": {"endpoint_url": "..."}},
         "simplecache": {"cache_storage": "/path/to/cache"}
@@ -109,7 +109,7 @@ xr.open_dataset(
 # storage_options which is not supported by rasterio:
 xr.open_dataset(
     "s3://bucket/file.tif",
-    engine="freva",
+    engine="prism",
     storage_options={
         "key": "YOUR_KEY",
         "secret": "YOUR_SECRET",
@@ -145,7 +145,7 @@ xr.open_dataset(
 > 
 > | Option | How |
 > |--------|-----|
-> | Environment variable | `export xarray_prism_CACHE=/path/to/cache` |
+> | Environment variable | `export XARRAY_PRISM_CACHE=/path/to/cache` |
 > | Per-call | `storage_options={"simplecache": {"cache_storage": "/path"}}` |
 > | Default | System temp directory |
 
@@ -226,7 +226,7 @@ After installing the plugin package, **import it once** to activate the registra
 import xarray_prism_myplugin  # activates detectors and handlers
 
 import xarray as xr
-ds = xr.open_dataset("myfs://bucket/path/data.foo", engine="freva")
+ds = xr.open_dataset("myfs://bucket/path/data.foo", engine="prism")
 ```
 
 

@@ -106,7 +106,7 @@ class TestCloudBackend:
     def test_open_grib_from_s3_with_cache(self, s3_env: dict, temp_cache_dir: Path):
         """Open a GRIB file from S3 with local caching."""
         uri = "s3://testdata/test.grib2"
-        os.environ["xarray_prism_CACHE"] = str(temp_cache_dir)
+        os.environ["XARRAY_PRISM_CACHE"] = str(temp_cache_dir)
 
         try:
             ds = open_cloud(
@@ -128,7 +128,7 @@ class TestCloudBackend:
                 pytest.skip(f"S3/cfgrib setup issue: {e}")
             raise
         finally:
-            os.environ.pop("xarray_prism_CACHE", None)
+            os.environ.pop("XARRAY_PRISM_CACHE", None)
 
     @pytest.mark.requires_minio
     def test_open_geotiff_from_s3(self, s3_env: dict):
@@ -174,12 +174,12 @@ class TestCacheConfiguration:
         """Cache directory should be configurable via environment."""
         from xarray_prism.backends.cloud import _get_cache_dir
 
-        os.environ["xarray_prism_CACHE"] = str(temp_cache_dir)
+        os.environ["XARRAY_PRISM_CACHE"] = str(temp_cache_dir)
         try:
             cache_dir = _get_cache_dir()
             assert cache_dir == temp_cache_dir
         finally:
-            os.environ.pop("xarray_prism_CACHE", None)
+            os.environ.pop("XARRAY_PRISM_CACHE", None)
 
     def test_cache_dir_from_storage_options(self, temp_cache_dir: Path):
         """Cache directory should be configurable via storage_options."""
@@ -196,7 +196,7 @@ class TestCacheConfiguration:
         from xarray_prism.backends.cloud import _get_cache_dir
         import tempfile
 
-        os.environ.pop("xarray_prism_CACHE", None)
+        os.environ.pop("XARRAY_PRISM_CACHE", None)
 
         cache_dir = _get_cache_dir()
         assert cache_dir.parent == Path(tempfile.gettempdir())

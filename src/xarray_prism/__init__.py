@@ -21,10 +21,10 @@ from ._detection import (
 )
 from ._registry import registry
 from ._version import __version__  # noqa
-from .entrypoint import FrevaBackendEntrypoint
+from .entrypoint import PrismBackendEntrypoint
 
 __all__ = [
-    "FrevaBackendEntrypoint",
+    "PrismBackendEntrypoint",
     "detect_engine",
     "detect_uri_type",
     "register_detector",

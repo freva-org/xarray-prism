@@ -9,58 +9,58 @@ from unittest.mock import patch
 import pytest
 import xarray as xr
 
-from xarray_prism import FrevaBackendEntrypoint
+from xarray_prism import PrismBackendEntrypoint
 from xarray_prism._registry import registry
 
 
-class TestFrevaBackendEntrypoint:
+class TestPrismBackendEntrypoint:
     """Tests for the xarray backend entrypoint."""
 
     @pytest.fixture
     def entrypoint(self):
         """Create a backend entrypoint instance."""
-        return FrevaBackendEntrypoint()
+        return PrismBackendEntrypoint()
 
-    def test_entrypoint_attributes(self, entrypoint: FrevaBackendEntrypoint):
+    def test_entrypoint_attributes(self, entrypoint: PrismBackendEntrypoint):
         """Entrypoint should have required attributes."""
         assert hasattr(entrypoint, "open_dataset")
         assert hasattr(entrypoint, "guess_can_open")
         assert entrypoint.description is not None
 
-    def test_guess_can_open_zarr(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_zarr(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize Zarr paths."""
         assert entrypoint.guess_can_open("data.zarr") is True
         assert entrypoint.guess_can_open("s3://bucket/data.zarr") is True
         assert entrypoint.guess_can_open("/path/to/store.zarr/") is True
 
-    def test_guess_can_open_netcdf(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_netcdf(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize NetCDF paths."""
         assert entrypoint.guess_can_open("data.nc") is True
         assert entrypoint.guess_can_open("data.nc4") is True
         assert entrypoint.guess_can_open("/path/to/file.nc") is True
 
-    def test_guess_can_open_grib(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_grib(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize GRIB paths."""
         assert entrypoint.guess_can_open("forecast.grib") is True
         assert entrypoint.guess_can_open("forecast.grib2") is True
         assert entrypoint.guess_can_open("data.grb") is True
         assert entrypoint.guess_can_open("data.grb2") is True
 
-    def test_guess_can_open_geotiff(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_geotiff(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize GeoTIFF paths."""
         assert entrypoint.guess_can_open("image.tif") is True
         assert entrypoint.guess_can_open("image.tiff") is True
 
-    def test_guess_can_open_reference(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_reference(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize reference:// URIs."""
         assert entrypoint.guess_can_open("reference://path/to/refs.json") is True
 
-    def test_guess_can_open_opendap(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_opendap(self, entrypoint: PrismBackendEntrypoint):
         """Should recognize OPeNDAP URLs."""
         assert entrypoint.guess_can_open("http://server/thredds/dodsC/data") is True
         assert entrypoint.guess_can_open("http://server/opendap/dataset") is True
 
-    def test_guess_can_open_rejects_unknown(self, entrypoint: FrevaBackendEntrypoint):
+    def test_guess_can_open_rejects_unknown(self, entrypoint: PrismBackendEntrypoint):
         """Should reject unknown formats."""
         assert entrypoint.guess_can_open("document.pdf") is False
         assert entrypoint.guess_can_open("image.jpg") is False
@@ -68,7 +68,7 @@ class TestFrevaBackendEntrypoint:
 
     @pytest.mark.requires_data
     def test_open_dataset_local_netcdf(
-        self, entrypoint: FrevaBackendEntrypoint, sample_netcdf_path: Path
+        self, entrypoint: PrismBackendEntrypoint, sample_netcdf_path: Path
     ):
         """Open a local NetCDF file via entrypoint."""
         if not sample_netcdf_path.exists():
@@ -80,7 +80,7 @@ class TestFrevaBackendEntrypoint:
 
     @pytest.mark.requires_data
     def test_open_dataset_local_grib(
-        self, entrypoint: FrevaBackendEntrypoint, sample_grib_path: Path
+        self, entrypoint: PrismBackendEntrypoint, sample_grib_path: Path
     ):
         """Open a local GRIB file via entrypoint."""
         if not sample_grib_path.exists():
@@ -97,7 +97,7 @@ class TestFrevaBackendEntrypoint:
 
     @pytest.mark.requires_data
     def test_open_dataset_with_drop_variables(
-        self, entrypoint: FrevaBackendEntrypoint, sample_netcdf_path: Path
+        self, entrypoint: PrismBackendEntrypoint, sample_netcdf_path: Path
     ):
         """Test drop_variables parameter via entrypoint."""
         if not sample_netcdf_path.exists():
@@ -116,7 +116,7 @@ class TestFrevaBackendEntrypoint:
 
     @pytest.mark.requires_data
     def test_open_dataset_explicit_engine(
-        self, entrypoint: FrevaBackendEntrypoint, sample_netcdf_path: Path
+        self, entrypoint: PrismBackendEntrypoint, sample_netcdf_path: Path
     ):
         """Test explicit engine override."""
         if not sample_netcdf_path.exists():
@@ -126,12 +126,12 @@ class TestFrevaBackendEntrypoint:
         assert isinstance(ds, xr.Dataset)
         ds.close()
 
-    def test_open_dataset_invalid_type(self, entrypoint: FrevaBackendEntrypoint):
+    def test_open_dataset_invalid_type(self, entrypoint: PrismBackendEntrypoint):
         """Should raise for invalid input types."""
         with pytest.raises(ValueError, match="file path or URL"):
             entrypoint.open_dataset(123)  # type: ignore
 
-    def test_open_dataset_unknown_format(self, entrypoint: FrevaBackendEntrypoint):
+    def test_open_dataset_unknown_format(self, entrypoint: PrismBackendEntrypoint):
         """Should raise for undetectable formats."""
         import tempfile
 
@@ -146,7 +146,7 @@ class TestFrevaBackendEntrypoint:
             os.unlink(temp_path)
 
     @pytest.mark.requires_minio
-    def test_open_dataset_s3(self, entrypoint: FrevaBackendEntrypoint, s3_env: dict):
+    def test_open_dataset_s3(self, entrypoint: PrismBackendEntrypoint, s3_env: dict):
         """Open a dataset from S3 via entrypoint."""
         uri = "s3://testdata/pr_EUR-11_NCC-NorESM1-M_rcp85_r1i1p1_GERICS-REMO2015_v2_3hr_200701020130-200701020430.nc"
 
@@ -164,7 +164,7 @@ class TestFrevaBackendEntrypoint:
 
     @pytest.mark.requires_thredds
     def test_open_dataset_opendap(
-        self, entrypoint: FrevaBackendEntrypoint, thredds_endpoint: str
+        self, entrypoint: PrismBackendEntrypoint, thredds_endpoint: str
     ):
         """Open a dataset via OPeNDAP through entrypoint."""
         opendap_url = (
@@ -183,7 +183,7 @@ class TestFrevaBackendEntrypoint:
             raise
 
     def test_open_dataset_custom_uri_type_no_handler(
-        self, entrypoint: FrevaBackendEntrypoint
+        self, entrypoint: PrismBackendEntrypoint
     ):
         """Should raise helpful error for custom uri_type without handler."""
         from xarray_prism._detection import register_uri_type, unregister_uri_type
@@ -206,11 +206,11 @@ class TestXarrayIntegration:
 
     @pytest.mark.requires_data
     def test_xarray_open_with_freva_engine(self, sample_netcdf_path: Path):
-        """xarray should recognize 'freva' as a valid engine."""
+        """xarray should recognize 'prism' as a valid engine."""
         if not sample_netcdf_path.exists():
             pytest.skip(f"Test file not found: {sample_netcdf_path}")
 
-        ds = xr.open_dataset(str(sample_netcdf_path), engine="freva")
+        ds = xr.open_dataset(str(sample_netcdf_path), engine="prism")
         assert isinstance(ds, xr.Dataset)
         ds.close()
 
@@ -258,7 +258,7 @@ class TestCustomRegistry:
             return xr.Dataset({"custom": (["z"], [7, 8, 9])})
 
         try:
-            entrypoint = FrevaBackendEntrypoint()
+            entrypoint = PrismBackendEntrypoint()
 
             import tempfile
 
@@ -290,7 +290,7 @@ class TestCustomRegistry:
             return xr.Dataset({"staged": (["t"], [10, 20, 30])})
 
         try:
-            entrypoint = FrevaBackendEntrypoint()
+            entrypoint = PrismBackendEntrypoint()
             ds = entrypoint.open_dataset("tape://archive/data.zarr")
             assert "staged" in ds.data_vars
             ds.close()

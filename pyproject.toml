@@ -55,7 +55,7 @@ Source = "https://github.com/freva-org/xarray-prism/"
 
 # IMPORTANT: Register as xarray backend, auto-discovered by xarray
 [project.entry-points."xarray.backends"]
-freva = "xarray_prism.entrypoint:FrevaBackendEntrypoint"
+prism = "xarray_prism.entrypoint:PrismBackendEntrypoint"
 [tool.codespell]
 ignore-words-list = "iterm"
 [tool.setuptools.dynamic]

@@ -199,7 +199,7 @@ class TestCustomDetectors:
 
     def test_unknown_engine_warning(self):
         """Custom detector returning unknown engine should warn."""
-        from xarray_prism import FrevaBackendEntrypoint
+        from xarray_prism import PrismBackendEntrypoint
         import warnings
 
         @register_detector(priority=100)
@@ -209,7 +209,7 @@ class TestCustomDetectors:
             return None
 
         try:
-            entrypoint = FrevaBackendEntrypoint()
+            entrypoint = PrismBackendEntrypoint()
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 engine, uri_type = entrypoint._detect("test.fake")
