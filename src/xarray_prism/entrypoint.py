@@ -3,6 +3,7 @@ automatic format detection."""
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from pathlib import Path
@@ -20,6 +21,8 @@ from ._detection import (
 )
 from ._registry import registry
 from .backends import open_cloud, open_posix
+
+logger = logging.getLogger(__name__)
 
 
 def _supports_hyperlinks() -> bool:
@@ -94,7 +97,7 @@ class PrismBackendEntrypoint(BackendEntrypoint):
     ) -> xr.Dataset:
         """Xarray Generic function: Open dataset with
         automatic format detection."""
-        if not isinstance(filename_or_obj, (str, Path)):
+        if not isinstance(filename_or_obj, (str, os.PathLike)):
             raise ValueError(
                 f"Prism backend requires a file path or URL, "
                 f"got {type(filename_or_obj).__name__}"
@@ -106,16 +109,15 @@ class PrismBackendEntrypoint(BackendEntrypoint):
         lines_printed = 0
 
         if is_remote:
-            sys.stdout.write("[info] Detecting format...")
+            logger.info("Detecting format...")
             sys.stdout.flush()
 
         engine, uri_type = self._detect(uri, **kwargs)
 
-        if is_remote:
+        if is_remote and engine:
+            logger.info(f"Detected: {engine}")
+            lines_printed = 1
             sys.stdout.write("\r" + " " * 25 + "\r")
-            if engine:
-                print(f"[info] Detected: {engine}")
-                lines_printed = 1
             sys.stdout.flush()
 
         if engine is None:
@@ -237,7 +239,7 @@ class PrismBackendEntrypoint(BackendEntrypoint):
 
     def guess_can_open(self, filename_or_obj: Any) -> bool:
         """Xarray Generic Function: cheap check without I/O."""
-        if not isinstance(filename_or_obj, (str, Path)):
+        if not isinstance(filename_or_obj, (str, os.PathLike)):
             return False
 
         u = str(filename_or_obj).lower()

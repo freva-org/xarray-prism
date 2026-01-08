@@ -44,7 +44,7 @@ class ProgressBar:
         self._render()
 
     def _render(self) -> None:
-        mb = self._current / 1024 / 1024
+        mb = self._current / 1024**2
 
         if self._total == 0:
             spinner = self._spinner_chars[self._spinner % len(self._spinner_chars)]
@@ -54,7 +54,7 @@ class ProgressBar:
             pct = min(self._current / self._total, 1.0)
             filled = int(self.width * pct)
             bar = "█" * filled + "░" * (self.width - filled)
-            total_mb = self._total / 1024 / 1024
+            total_mb = self._total / 1024**2
             line = f"{self.desc} |{bar}| {pct * 100:.0f}% ({mb:.1f}/{total_mb:.1f} MB)"
 
         clear = " " * self._last_line_len

@@ -47,6 +47,7 @@ dev = [
     "isort",
     "flake8",
     "codespell",
+    "tox",
 ]
 
 [project.urls]

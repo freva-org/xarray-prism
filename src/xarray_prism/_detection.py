@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 import fsspec
 
@@ -19,6 +19,7 @@ _custom_detectors: List[Tuple[int, Detector]] = []
 
 _custom_uri_type_detectors: List[Tuple[int, Detector]] = []
 
+Engine = Literal["cfgrib", "scipy", "h5netcdf", "rasterio", "unknown"]
 
 # --------------------------------------------------------------------------- #
 # External Detector Registration
@@ -201,7 +202,7 @@ def _read_magic_bytes(fs: fsspec.AbstractFileSystem, path: str) -> Any:
         return None
 
 
-def _detect_from_magic_bytes(header: bytes, lower_path: str) -> str:
+def _detect_from_magic_bytes(header: bytes, lower_path: str) -> Engine:
     """Detect engine from magic bytes and file extension."""
     # GRIB detection
     if b"GRIB" in header or lower_path.endswith((".grib", ".grb", ".grb2")):

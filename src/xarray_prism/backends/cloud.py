@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import tempfile
@@ -14,6 +15,9 @@ import fsspec
 import xarray as xr
 
 from ..utils import ProgressBar, gdal_env
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
@@ -62,8 +66,8 @@ def _cache_remote_file(
     extra_lines = 0
     if show_progress:
         fmt = "GRIB" if engine == "cfgrib" else "NetCDF3"
-        print(f"[warning] Remote {fmt} requires full file download")
-        extra_lines = 1
+        logger.warning(f"Remote {fmt} requires full file download")
+        extra_lines = 2
 
     fs, path = fsspec.core.url_to_fs(uri, **(storage_options or {}))
 
@@ -77,7 +81,7 @@ def _cache_remote_file(
         filename = Path(uri).name
         if len(filename) > 35:
             filename = filename[:32] + "..."
-        desc = f"[info] Downloadig {filename}"
+        desc = f" Downloadig {filename}"
 
         total_lines = lines_above + extra_lines
 
