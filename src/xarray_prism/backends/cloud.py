@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
     """Get cache directory."""
     env_cache = os.environ.get("XARRAY_PRISM_CACHE")
