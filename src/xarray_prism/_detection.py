@@ -5,14 +5,6 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
-import fsspec
-
-try:
-    from aiohttp import ClientResponseError
-except ImportError:
-    ClientResponseError = Exception  # type: ignore
-
-
 Detector = Callable[[str], Optional[str]]
 
 _custom_detectors: List[Tuple[int, Detector]] = []
@@ -176,19 +168,25 @@ def _detect_from_uri_pattern(lower_uri: str) -> Optional[str]:
     return None
 
 
-def _detect_zarr_directory(fs: fsspec.AbstractFileSystem, path: str) -> Any:
+def _detect_zarr_directory(fs: Any, path: str) -> bool:
     """Check if path is a Zarr directory store."""
     try:
         if fs.isdir(path):
             base = path.rstrip("/")
-            return fs.exists(f"{base}/.zgroup") or fs.exists(f"{base}/.zattrs")
+            return bool(fs.exists(f"{base}/.zgroup") or fs.exists(f"{base}/.zattrs"))
     except (FileNotFoundError, OSError):
         pass
     return False
 
 
-def _read_magic_bytes(fs: fsspec.AbstractFileSystem, path: str) -> Any:
+def _read_magic_bytes(fs: Any, path: str) -> Any:
     """Read magic bytes from file, handling errors."""
+    # Lazy import: aiohttp only needed during actual I/O
+    try:
+        from aiohttp import ClientResponseError
+    except ImportError:
+        ClientResponseError = Exception  # type: ignore
+
     try:
         return fs.cat_file(path, start=0, end=64)
     except ClientResponseError as e:
@@ -258,7 +256,9 @@ def _detect_engine_impl(uri: str, storage_options: Optional[Dict]) -> str:
     if pattern_result is not None:
         return pattern_result
 
-    # 3. Filesystem-based detection
+    # 3. Filesystem-based detection — lazy import fsspec only when needed
+    import fsspec  # noqa: PLC0415
+
     fs, path = fsspec.core.url_to_fs(uri, **(storage_options or {}))
     lower_path = path.lower()
 

@@ -5,8 +5,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-import xarray as xr
-
 
 def open_posix(
     uri: str,
@@ -14,8 +12,10 @@ def open_posix(
     drop_variables: Optional[Any] = None,
     backend_kwargs: Optional[Dict[str, Any]] = None,
     **kwargs,
-) -> xr.Dataset:
+) -> Any:
     """Open local file with detected engine."""
+    import xarray as xr
+
     return xr.open_dataset(
         uri,
         engine=engine,

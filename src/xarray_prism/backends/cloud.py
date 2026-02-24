@@ -11,13 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
-import fsspec
-import xarray as xr
-
-from ..utils import ProgressBar, gdal_env
-
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
@@ -48,7 +42,11 @@ def _cache_remote_file(
     show_progress: bool = True,
     lines_above: int = 0,
 ) -> str:
-    """Cache remote file to local"""
+    """Cache remote file to local."""
+    import fsspec
+
+    from ..utils import ProgressBar
+
     cache_root = _get_cache_dir(storage_options)
     parsed = urlparse(uri)
     filename = Path(parsed.path).name
@@ -78,14 +76,12 @@ def _cache_remote_file(
         except Exception:
             pass
 
-        filename = Path(uri).name
-        if len(filename) > 35:
-            filename = filename[:32] + "..."
-        desc = f" Downloadig {filename}"
+        display_name = Path(parsed.path).name
+        if len(display_name) > 35:
+            display_name = display_name[:32] + "..."
+        desc = f" Downloading {display_name}"
 
-        total_lines = lines_above + extra_lines
-
-        with ProgressBar(desc=desc, lines_above=total_lines) as progress:
+        with ProgressBar(desc=desc, lines_above=lines_above + extra_lines) as progress:
             progress.set_size(size)
             with fs.open(path, "rb") as src, open(local_path, "wb") as dst:
                 while True:
@@ -108,8 +104,12 @@ def open_cloud(
     show_progress: bool = True,
     lines_above: int = 0,
     **kwargs,
-) -> xr.Dataset:
+) -> Any:
     """Open remote file with detected engine."""
+    import xarray as xr
+
+    from ..utils import gdal_env
+
     storage_options = kwargs.pop("storage_options", None)
 
     def _clear_lines():
@@ -120,6 +120,8 @@ def open_cloud(
                 sys.stdout.write("\033[K")
             sys.stdout.flush()
 
+    bk = backend_kwargs or None
+
     # GRIB: cache locally
     if engine == "cfgrib":
         local_path = _cache_remote_file(
@@ -129,7 +131,7 @@ def open_cloud(
             local_path,
             engine=engine,
             drop_variables=drop_variables,
-            backend_kwargs=backend_kwargs or None,
+            backend_kwargs=bk,
             **kwargs,
         )
 
@@ -142,7 +144,7 @@ def open_cloud(
             local_path,
             engine=engine,
             drop_variables=drop_variables,
-            backend_kwargs=backend_kwargs or None,
+            backend_kwargs=bk,
             **kwargs,
         )
 
@@ -152,7 +154,7 @@ def open_cloud(
             uri,
             engine=engine,
             drop_variables=drop_variables,
-            backend_kwargs=backend_kwargs or None,
+            backend_kwargs=bk,
             **kwargs,
         )
         _clear_lines()
@@ -165,7 +167,7 @@ def open_cloud(
                 uri,
                 engine=engine,
                 drop_variables=drop_variables,
-                backend_kwargs=backend_kwargs or None,
+                backend_kwargs=bk,
                 **kwargs,
             )
         _clear_lines()
@@ -176,7 +178,7 @@ def open_cloud(
         uri,
         engine=engine,
         drop_variables=drop_variables,
-        backend_kwargs=backend_kwargs or None,
+        backend_kwargs=bk,
         storage_options=storage_options,
         **kwargs,
     )

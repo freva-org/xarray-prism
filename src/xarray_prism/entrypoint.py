@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-import xarray as xr
 from xarray.backends import BackendEntrypoint
 
 from ._detection import (
@@ -20,7 +19,6 @@ from ._detection import (
     looks_like_opendap_url,
 )
 from ._registry import registry
-from .backends import open_cloud, open_posix
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +92,8 @@ class PrismBackendEntrypoint(BackendEntrypoint):
         *,
         drop_variables: Optional[Any] = None,
         **kwargs: Any,
-    ) -> xr.Dataset:
-        """Xarray Generic function: Open dataset with
-        automatic format detection."""
+    ) -> Any:
+        """Xarray Generic function: Open dataset with automatic format detection."""
         if not isinstance(filename_or_obj, (str, os.PathLike)):
             raise ValueError(
                 f"Prism backend requires a file path or URL, "
@@ -169,9 +166,11 @@ class PrismBackendEntrypoint(BackendEntrypoint):
                 backend_kwargs=backend_kwargs,
                 **kwargs,
             )
-
         # Route to POSIX or cloud handler (built-in uri_types only)
+        # Lazy imports: backends only loaded when actually opening a dataset
         if uri_type == "posix":
+            from .backends.posix import open_posix
+
             return open_posix(
                 uri,
                 engine=engine,
@@ -180,6 +179,8 @@ class PrismBackendEntrypoint(BackendEntrypoint):
                 **kwargs,
             )
         elif uri_type in ("cloud", "reference"):
+            from .backends.cloud import open_cloud
+
             return open_cloud(
                 uri,
                 engine=engine,
@@ -200,7 +201,6 @@ class PrismBackendEntrypoint(BackendEntrypoint):
     def _detect(self, uri: str, **kwargs: Any) -> Tuple[Optional[str], str]:
         """Detect engine and URI type."""
         uri_type = detect_uri_type(uri)
-
         # Get storage_options for detection
         storage_options = kwargs.get("storage_options")
 
@@ -249,13 +249,11 @@ class PrismBackendEntrypoint(BackendEntrypoint):
             return True
         if u.startswith("reference://"):
             return True
-
-        # Common extensions
+        # common climate data formats by extension
         if u.endswith(
             (".grib", ".grib2", ".grb", ".grb2", ".tif", ".tiff", ".nc", ".nc4")
         ):
             return True
-
         # OPeNDAP
         if is_http_url(u) and looks_like_opendap_url(u):
             return True

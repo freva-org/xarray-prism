@@ -21,7 +21,6 @@ from ._detection import (
 )
 from ._registry import registry
 from ._version import __version__  # noqa
-from .entrypoint import PrismBackendEntrypoint
 
 __all__ = [
     "PrismBackendEntrypoint",
@@ -31,3 +30,11 @@ __all__ = [
     "register_uri_type",
     "registry",
 ]
+
+
+def __getattr__(name):
+    if name == "PrismBackendEntrypoint":
+        from .entrypoint import PrismBackendEntrypoint
+
+        return PrismBackendEntrypoint
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
