@@ -1,3 +1,3 @@
 """Version information for xarray-prism."""
 
-__version__ = "2512.0.14"
+__version__ = "2602.0.0"
