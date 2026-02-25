@@ -55,8 +55,7 @@ def _sanitize_rasterio_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     for key, (allowed, reason) in _RASTERIO_RESTRICTED_KWARGS.items():
         if key in sanitized and sanitized[key] != allowed:
             logger.warning(
-                "'%s=%r' is not supported — "
-                "%s (using '%s' instead).",
+                "'%s=%r' is not supported — " "%s (using '%s' instead).",
                 key,
                 sanitized[key],
                 reason,
