@@ -1,9 +1,12 @@
 """Utility functions"""
 
+import logging
 import os
 import sys
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, Optional
+
+logger = logging.getLogger(__name__)
 
 STORAGE_OPTIONS_TO_GDAL: Dict[str, str] = {
     "key": "AWS_ACCESS_KEY_ID",
@@ -157,3 +160,84 @@ def gdal_env(storage_options: Optional[Dict[str, Any]] = None) -> Iterator[None]
                 os.environ.pop(gdal_key, None)
             else:
                 os.environ[gdal_key] = original
+
+
+# kwargs that rasterio/rioxarray does not accept at all
+_RASTERIO_UNSUPPORTED_KWARGS = frozenset(
+    [
+        "use_cftime",
+        "decode_cf",
+        "decode_times",
+        "decode_timedelta",
+        "use_default_fill_value",
+        "cftime_variables",
+    ]
+)
+
+# kwargs that rasterio/rioxarray accepts but with restricted values;
+# maps kwarg name -> (allowed_value, human-readable reason)
+_RASTERIO_RESTRICTED_KWARGS: Dict[str, Any] = {
+    "decode_coords": (
+        "all",
+        "rioxarray only supports decode_coords='all'; overriding your value",
+    ),
+}
+
+
+def sanitize_rasterio_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Remove or adjust kwargs that are incompatible with the rasterio/rioxarray
+    backend.
+    """
+    sanitized = dict(kwargs)
+
+    for key in _RASTERIO_UNSUPPORTED_KWARGS:
+        if key in sanitized:
+            logger.warning(
+                "dropping unsupported kwarg "
+                "'%s=%r' (rioxarray does not accept this parameter).",
+                key,
+                sanitized.pop(key),
+            )
+
+    for key, (allowed, reason) in _RASTERIO_RESTRICTED_KWARGS.items():
+        if key in sanitized and sanitized[key] != allowed:
+            logger.warning(
+                "'%s=%r' is not supported — " "%s (using '%s' instead).",
+                key,
+                sanitized[key],
+                reason,
+                allowed,
+            )
+            sanitized[key] = allowed
+
+    return sanitized
+
+
+def _clean_surrogates_str(s: str) -> str:
+    return s.encode("utf-8", "replace").decode("utf-8")
+
+
+def _clean_attr_obj(obj):
+    if isinstance(obj, str):
+        return _clean_surrogates_str(obj)
+    if isinstance(obj, dict):
+        return {k: _clean_attr_obj(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_clean_attr_obj(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(_clean_attr_obj(v) for v in obj)
+    return obj
+
+
+def sanitize_dataset_attrs(ds):
+    # global attrs
+    if ds.attrs:
+        ds.attrs = _clean_attr_obj(dict(ds.attrs))
+
+    # variable attrs only (cheap, no data touched)
+    for var in ds.variables.values():
+        if var.attrs:
+            var.attrs = _clean_attr_obj(dict(var.attrs))
+
+    return ds

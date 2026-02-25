@@ -16,10 +16,19 @@ def open_posix(
     """Open local file with detected engine."""
     import xarray as xr
 
-    return xr.open_dataset(
+    if engine == "rasterio":
+        from ..utils import sanitize_rasterio_kwargs
+
+        kwargs = sanitize_rasterio_kwargs(kwargs)
+    ds = xr.open_dataset(
         uri,
         engine=engine,
         drop_variables=drop_variables,
         backend_kwargs=backend_kwargs or None,
         **kwargs,
     )
+    if engine == "h5netcdf":
+        from ..utils import sanitize_dataset_attrs
+
+        return sanitize_dataset_attrs(ds)
+    return ds
