@@ -14,6 +14,58 @@ from urllib.parse import urlparse
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# kwargs that rasterio/rioxarray does not accept at all
+_RASTERIO_UNSUPPORTED_KWARGS = frozenset(
+    [
+        "use_cftime",
+        "decode_cf",
+        "decode_times",
+        "decode_timedelta",
+        "use_default_fill_value",
+        "cftime_variables",
+    ]
+)
+
+# kwargs that rasterio/rioxarray accepts but with restricted values;
+# maps kwarg name -> (allowed_value, human-readable reason)
+_RASTERIO_RESTRICTED_KWARGS: Dict[str, Any] = {
+    "decode_coords": (
+        "all",
+        "rioxarray only supports decode_coords='all'; overriding your value",
+    ),
+}
+
+
+def _sanitize_rasterio_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Remove or adjust kwargs that are incompatible with the rasterio/rioxarray
+    backend.
+    """
+    sanitized = dict(kwargs)
+
+    for key in _RASTERIO_UNSUPPORTED_KWARGS:
+        if key in sanitized:
+            logger.warning(
+                "dropping unsupported kwarg "
+                "'%s=%r' (rioxarray does not accept this parameter).",
+                key,
+                sanitized.pop(key),
+            )
+
+    for key, (allowed, reason) in _RASTERIO_RESTRICTED_KWARGS.items():
+        if key in sanitized and sanitized[key] != allowed:
+            logger.warning(
+                "'%s=%r' is not supported — "
+                "%s (using '%s' instead).",
+                key,
+                sanitized[key],
+                reason,
+                allowed,
+            )
+            sanitized[key] = allowed
+
+    return sanitized
+
 
 def _get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
     """Get cache directory."""
@@ -163,13 +215,14 @@ def open_cloud(
 
     # Rasterio: use GDAL env vars (doesn't support storage_options)
     if engine == "rasterio":
+        rasterio_kwargs = _sanitize_rasterio_kwargs(kwargs)
         with gdal_env(storage_options):
             ds = xr.open_dataset(
                 uri,
                 engine=engine,
                 drop_variables=drop_variables,
                 backend_kwargs=bk,
-                **kwargs,
+                **rasterio_kwargs,
             )
         _clear_lines()
         return ds

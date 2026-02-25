@@ -49,6 +49,7 @@ dev = [
     "flake8",
     "codespell",
     "tox",
+    "ipython"
 ]
 
 [project.urls]

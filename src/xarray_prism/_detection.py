@@ -188,7 +188,7 @@ def _read_magic_bytes(fs: Any, path: str) -> Any:
         ClientResponseError = Exception  # type: ignore
 
     try:
-        return fs.cat_file(path, start=0, end=64)
+        return fs.cat_file(path, start=0, end=512)
     except ClientResponseError as e:
         content_desc = getattr(e, "headers", {}).get("Content-Description", "").lower()
         if "dods" in content_desc:
@@ -203,7 +203,7 @@ def _read_magic_bytes(fs: Any, path: str) -> Any:
 def _detect_from_magic_bytes(header: bytes, lower_path: str) -> Engine:
     """Detect engine from magic bytes and file extension."""
     # GRIB detection
-    if b"GRIB" in header or lower_path.endswith((".grib", ".grb", ".grb2")):
+    if b"GRIB" in header or lower_path.endswith((".grib", ".grb", ".grb2", ".grib2")):
         return "cfgrib"
 
     # NetCDF3 (Classic)
