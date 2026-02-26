@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v2602.0.0]
+## [v2602.1.0]
 ### Added
 - Initial release of the project.
 
