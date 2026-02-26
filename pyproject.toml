@@ -1,0 +1,215 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xarray-prism"
+dynamic = ["version"]
+description = "A multi-format and multi-storage xarray engine with automatic engine detection, and ability to register new data format and uri type for climate data."
+readme = "README.md"
+authors = [{name = "DKRZ, Clint", email = "freva@dkrz.de"}]
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+keywords = ["xarray", "climate", "netcdf", "zarr", "grib", "geotiff"]
+classifiers = [
+               "Development Status :: 4 - Beta",
+               "Environment :: Console",
+               "Intended Audience :: Developers",
+               "Intended Audience :: Science/Research",
+               "License :: OSI Approved :: BSD License",
+               "Operating System :: POSIX :: Linux",
+               "Programming Language :: Python :: 3",
+]
+
+dependencies = [
+    "xarray",
+    "fsspec",
+    "h5py",
+    "h5netcdf",
+    "scipy",
+    "zarr",
+    "cfgrib",
+    "eccodes",
+    "rioxarray",
+    "rasterio",
+    "netCDF4",
+    "s3fs",
+    "gcsfs",
+    "adlfs",
+]
+
+[project.optional-dependencies]
+
+dev = [
+    "pytest",
+    "pytest-cov",
+    "mypy",
+    "black",
+    "isort",
+    "flake8",
+    "codespell",
+    "tox",
+    "ipython"
+]
+
+[project.urls]
+Issues = "https://github.com/freva-org/xarray-prism/issues"
+Source = "https://github.com/freva-org/xarray-prism/"
+
+# IMPORTANT: Register as xarray backend, auto-discovered by xarray
+[project.entry-points."xarray.backends"]
+prism = "xarray_prism.entrypoint:PrismBackendEntrypoint"
+[tool.codespell]
+ignore-words-list = "iterm"
+[tool.setuptools.dynamic]
+version = {attr = "xarray_prism._version.__version__"}
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["xarray_prism*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+env = [
+    "MINIO_ENDPOINT=http://localhost:9000",
+    "MINIO_ACCESS_KEY=minioadmin",
+    "MINIO_SECRET_KEY=minioadmin",
+    "THREDDS_ENDPOINT=http://localhost:8088",
+]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+files = "src/xarray_prism"
+strict = false
+follow_imports = "silent"
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312", "py313", "py314"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["xarray_prism"]
+
+[tool.flake8]
+ignore = ["F405", "F403", "E704", "W503", "C901"]
+max-line-length = 88
+
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+min_version = 4.0
+env_list = test, lint, types
+passenv = *
+
+[testenv]
+passenv = *
+parallel_show_output = false
+
+[testenv:test]
+description = "Run the tests"
+setenv =
+    MINIO_ENDPOINT = http://localhost:9000
+    MINIO_ACCESS_KEY = minioadmin
+    MINIO_SECRET_KEY = minioadmin
+    THREDDS_ENDPOINT = http://localhost:8088
+deps =
+    pytest
+    pytest-cov
+    pytest-env
+commands_pre =
+    python -m pip install --no-deps -e .
+commands =
+    python3 -m pytest -vv tests/ {posargs}
+
+[testenv:test-cov]
+description = "Run tests with coverage"
+setenv =
+    MINIO_ENDPOINT = http://localhost:9000
+    MINIO_ACCESS_KEY = minioadmin
+    MINIO_SECRET_KEY = minioadmin
+    THREDDS_ENDPOINT = http://localhost:8088
+deps =
+    -e .[dev]
+    pytest-env
+commands =
+    python3 -m pytest -vv --cov=xarray_prism --cov-report=html:coverage_report --cov-report=xml --junitxml=report.xml tests/ {posargs}
+    python3 -m coverage report --fail-under=80 --precision=2
+
+[testenv:lint]
+description = "Check code quality."
+skip_install = true
+deps =
+    black
+    isort
+    flake8
+    codespell
+commands =
+    python3 -m isort --check --profile black -t py39 -l 88 src/xarray_prism
+    python3 -m black --check src/xarray_prism tests
+    python3 -m flake8 src/xarray_prism --count --max-complexity=10 --ignore=F405,F403,E704,W503,C901 --max-line-length=88 --statistics --show-source
+    codespell --quiet-level=2 src/xarray_prism
+
+[testenv:types]
+description = "Static type checking."
+skip_install = true
+deps =
+    mypy
+    types-setuptools
+commands =
+    python3 -m mypy src/xarray_prism --ignore-missing-imports
+
+[testenv:format]
+description = "Auto-format code."
+deps =
+    black
+    isort
+commands =
+    python3 -m isort --profile black -t py39 -l 88 src/xarray_prism tests
+    python3 -m black src/xarray_prism tests
+
+[testenv:release]
+description = "Tag a new release."
+deps =
+    git-python
+    packaging
+    requests
+    tomli
+commands =
+    python3 bump.py tag xarray_prism -p .
+allowlist_externals =
+    rm
+    curl
+commands_pre =
+    curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
+commands_post =
+    rm bump.py
+
+[testenv:bump]
+description = "Deploy version bump."
+deps =
+    git-python
+    packaging
+    requests
+    tomli
+commands =
+    python3 bump.py deploy xarray_prism -p .
+allowlist_externals =
+    rm
+    curl
+commands_pre =
+    curl -H 'Cache-Control: no-cache' -Ls -o bump.py https://raw.githubusercontent.com/freva-org/freva-admin/main/release.py
+commands_post =
+    rm bump.py
+
+"""

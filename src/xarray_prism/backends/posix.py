@@ -1,0 +1,34 @@
+"""Module to open local files using xarray
+with a specified engine."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, Optional
+
+
+def open_posix(
+    uri: str,
+    engine: str,
+    drop_variables: Optional[Any] = None,
+    backend_kwargs: Optional[Dict[str, Any]] = None,
+    **kwargs,
+) -> Any:
+    """Open local file with detected engine."""
+    import xarray as xr
+
+    if engine == "rasterio":
+        from ..utils import sanitize_rasterio_kwargs
+
+        kwargs = sanitize_rasterio_kwargs(kwargs)
+    ds = xr.open_dataset(
+        uri,
+        engine=engine,
+        drop_variables=drop_variables,
+        backend_kwargs=backend_kwargs or None,
+        **kwargs,
+    )
+    if engine == "h5netcdf":
+        from ..utils import sanitize_dataset_attrs
+
+        return sanitize_dataset_attrs(ds)
+    return ds

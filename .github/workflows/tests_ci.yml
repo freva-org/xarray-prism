@@ -1,0 +1,117 @@
+name: CI Tests
+
+permissions:
+  pull-requests: write
+  contents: write
+  packages: write
+
+on: [push, pull_request, workflow_call]
+
+jobs:
+  lint-and-types:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox
+
+      - name: Run lint and type checks
+        run: tox run-parallel --parallel-no-spinner -e lint,types
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          micromamba-version: "latest"
+          environment-name: xarray-prism
+          cache-environment: true
+          cache-downloads: true
+          create-args: >-
+            python=${{ matrix.python-version }}
+            hdf5
+            netcdf4
+            h5py
+            h5netcdf
+            eccodes
+            cfgrib
+            rasterio
+            gdal
+            pip
+            tox
+          condarc: |
+            channels:
+              - conda-forge
+            channel_priority: strict
+          init-shell: bash
+
+      - name: Set up services
+        shell: bash -l {0}
+        run: |
+          docker compose -f dev-env/docker-compose.yaml up -d --remove-orphans
+
+      - name: Wait for MinIO
+        shell: bash -l {0}
+        run: |
+          echo "Waiting for MinIO to be ready..."
+          timeout 60 bash -c 'until curl -sf http://localhost:9000/minio/health/ready; do sleep 2; done'
+          echo "MinIO is ready"
+
+      - name: Wait for THREDDS
+        shell: bash -l {0}
+        run: |
+          echo "Waiting for THREDDS to be ready..."
+          timeout 120 bash -c 'until curl -sf http://localhost:8088/thredds/catalog.html; do sleep 5; done'
+          echo "THREDDS is ready"
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: VIRTUALENV_SYSTEM_SITE_PACKAGES=1 tox -e test
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+
+  dependabot:
+    name: Merge PR by dependabot
+    runs-on: ubuntu-latest
+    needs: [tests, lint-and-types]
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Approve dependabot's PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+
+      - name: Auto-merge for dependabot's PR
+        run: gh pr merge --merge --auto "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
