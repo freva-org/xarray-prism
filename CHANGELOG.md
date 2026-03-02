@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2603.0.0]
+### Added
+- Cache cleanup strategy to evict automatically
+
 ## [v2602.1.0]
 ### Added
 - Initial release of the project.
