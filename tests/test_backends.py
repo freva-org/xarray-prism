@@ -172,32 +172,28 @@ class TestCacheConfiguration:
 
     def test_cache_dir_from_env(self, temp_cache_dir: Path):
         """Cache directory should be configurable via environment."""
-        from xarray_prism.backends.cloud import _get_cache_dir
+        from xarray_prism._cache import get_cache_dir
 
         os.environ["XARRAY_PRISM_CACHE"] = str(temp_cache_dir)
         try:
-            cache_dir = _get_cache_dir()
-            assert cache_dir == temp_cache_dir
+            assert get_cache_dir() == temp_cache_dir
         finally:
             os.environ.pop("XARRAY_PRISM_CACHE", None)
 
     def test_cache_dir_from_storage_options(self, temp_cache_dir: Path):
         """Cache directory should be configurable via storage_options."""
-        from xarray_prism.backends.cloud import _get_cache_dir
+        from xarray_prism._cache import get_cache_dir
 
-        storage_options = {
-            "simplecache": {"cache_storage": str(temp_cache_dir)},
-        }
-        cache_dir = _get_cache_dir(storage_options)
-        assert cache_dir == temp_cache_dir
+        storage_options = {"simplecache": {"cache_storage": str(temp_cache_dir)}}
+        assert get_cache_dir(storage_options) == temp_cache_dir
 
     def test_cache_dir_default(self):
         """Default cache should be in temp directory."""
-        from xarray_prism.backends.cloud import _get_cache_dir
         import tempfile
 
-        os.environ.pop("XARRAY_PRISM_CACHE", None)
+        from xarray_prism._cache import get_cache_dir
 
-        cache_dir = _get_cache_dir()
+        os.environ.pop("XARRAY_PRISM_CACHE", None)
+        cache_dir = get_cache_dir()
         assert cache_dir.parent == Path(tempfile.gettempdir())
         assert "xarray-prism-cache" in str(cache_dir)

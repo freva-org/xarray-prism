@@ -148,6 +148,33 @@ xr.open_dataset(
 > | Per-call | `storage_options={"simplecache": {"cache_storage": "/path"}}` |
 > | Default | System temp directory |
 
+### Cache management
+
+The cache is evicted automatically after each new download using two policies:
+
+| Policy | Default | Override |
+|--------|---------|----------|
+| TTL (last-access) | 7 days | `XARRAY_PRISM_MAX_AGE_DAYS=N` |
+| Size cap (LRU) | 10 GB | `XARRAY_PRISM_MAX_SIZE_GB=N` |
+
+You can also inspect or evict the cache manually:
+
+```python
+import xarray_prism as xp
+
+xp.cache_info()
+# {'files': 12, 'size_bytes': 2400000000, 'path': '/tmp/xarray-prism-cache'}
+
+# Preview what would be removed
+xp.clear_cache(dry_run=True)
+
+# Evict with custom thresholds
+xp.clear_cache(max_age_days=3, max_size_gb=2)
+
+# Remove everything
+xp.clear_cache(max_age_days=0, max_size_gb=0)
+```
+
 
 ## Customization
 

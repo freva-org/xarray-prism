@@ -13,6 +13,7 @@
 # cfgrib and scipy typically must read the entire file (and build
 # its index) even when only a small subset is requested.
 
+from ._cache import cache_info, clear_cache
 from ._detection import (
     detect_engine,
     detect_uri_type,
@@ -29,6 +30,8 @@ __all__ = [
     "register_detector",
     "register_uri_type",
     "registry",
+    "cache_info",
+    "clear_cache",
 ]
 
 
