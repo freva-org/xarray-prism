@@ -4,8 +4,8 @@ A multi-format and multi-storage xarray engine with automatic engine detection,
 and ability to register new data format and uri type for climate data.
 
 > [!Important]
-> If you encounter with a data formats that `freva` engine is not able to open, please
-> files an issue report [here](https://github.com/freva-org/freva-xarray/issues/new).
+> If you encounter with a data formats that `prism` engine is not able to open, please
+> files an issue report [here](https://github.com/freva-org/xarray-prism/issues/new).
 > This helps us to improve the engine enabling users work with different kinds of climate data.
 
 
