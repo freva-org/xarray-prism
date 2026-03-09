@@ -12,6 +12,7 @@ from typing import Any, Dict, Optional, Tuple
 from xarray.backends import BackendEntrypoint
 
 from ._detection import (
+    _strip_compression_suffix,
     detect_engine,
     detect_uri_type,
     is_http_url,
@@ -242,7 +243,7 @@ class PrismBackendEntrypoint(BackendEntrypoint):
         if not isinstance(filename_or_obj, (str, os.PathLike)):
             return False
 
-        u = str(filename_or_obj).lower()
+        u = _strip_compression_suffix(str(filename_or_obj).lower())
 
         # Zarr
         if u.endswith(".zarr") or ".zarr/" in u:

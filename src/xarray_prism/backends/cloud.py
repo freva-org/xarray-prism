@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
-from ..utils import _strip_chaining_options
+from ..utils import _decompress_if_needed, _strip_chaining_options
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -62,7 +62,7 @@ def _cache_remote_file(
                 sys.stdout.write("\033[A")
                 sys.stdout.write("\033[K")
             sys.stdout.flush()
-        return str(local_path)
+        return _decompress_if_needed(str(local_path))
 
     extra_lines = 0
     if show_progress:
@@ -98,7 +98,7 @@ def _cache_remote_file(
     else:
         fs.get(path, str(local_path))
 
-    return str(local_path)
+    return _decompress_if_needed(str(local_path))
 
 
 def open_cloud(

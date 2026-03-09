@@ -3,10 +3,13 @@
 import logging
 import os
 import sys
+import tempfile
 from contextlib import contextmanager
 from typing import Any, Dict, Iterator, Optional
 
 logger = logging.getLogger(__name__)
+
+_COMPRESSION_SUFFIXES = (".bz2", ".gz", ".xz", ".zst", ".lz4")
 
 STORAGE_OPTIONS_TO_GDAL: Dict[str, str] = {
     "key": "AWS_ACCESS_KEY_ID",
@@ -253,3 +256,42 @@ def _strip_chaining_options(storage_options: dict) -> dict:
     from fsspec.registry import known_implementations
 
     return {k: v for k, v in storage_options.items() if k not in known_implementations}
+
+
+def _strip_compression_suffix(uri: str) -> str:
+    """Remove common compression suffixes from URI for
+    more accurate pattern detection."""
+    for suffix in _COMPRESSION_SUFFIXES:
+        if uri.endswith(suffix):
+            return uri[: -len(suffix)]
+    return uri
+
+
+def _decompress_if_needed(path: str, output_dir: Optional[str] = None) -> str:
+    """Decompress a file if it has a known compression suffix.
+    Returns the path to the decompressed file (or original if not compressed).
+    Uses output_dir if provided, otherwise decompresses alongside the source file.
+    """
+    import bz2
+    import gzip
+    import lzma
+
+    # Dict[str, Any] avoids mypy errors from overloaded open() signatures
+    _DECOMPRESSORS: Dict[str, Any] = {
+        ".bz2": bz2.open,
+        ".gz": gzip.open,
+        ".xz": lzma.open,
+    }
+
+    for suffix, opener in _DECOMPRESSORS.items():
+        if path.endswith(suffix):
+            bare_name = os.path.basename(path)[: -len(suffix)]
+            out_dir = output_dir or os.path.dirname(path) or tempfile.gettempdir()
+            decompressed = os.path.join(out_dir, bare_name)
+            if not os.path.exists(decompressed):
+                with opener(path, "rb") as src, open(decompressed, "wb") as dst:
+                    while chunk := src.read(512 * 1024):
+                        dst.write(chunk)
+            return decompressed
+
+    return path
