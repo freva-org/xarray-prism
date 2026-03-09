@@ -5,6 +5,8 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
+from .utils import _strip_chaining_options
+
 Detector = Callable[[str], Optional[str]]
 
 _custom_detectors: List[Tuple[int, Detector]] = []
@@ -259,7 +261,10 @@ def _detect_engine_impl(uri: str, storage_options: Optional[Dict]) -> str:
     # 3. Filesystem-based detection — lazy import fsspec only when needed
     import fsspec  # noqa: PLC0415
 
-    fs, path = fsspec.core.url_to_fs(uri, **(storage_options or {}))
+    fs, path = fsspec.core.url_to_fs(
+        uri, **_strip_chaining_options(storage_options or {})
+    )
+
     lower_path = path.lower()
 
     # Check for Zarr directory

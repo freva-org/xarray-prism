@@ -75,7 +75,7 @@ class PrismBackendEntrypoint(BackendEntrypoint):
     )
 
     url = "https://github.com/freva-org/xarray-prism"
-    open_dataset_parameters = ("filename_or_obj", "drop_variables")
+    open_dataset_parameters = ("filename_or_obj", "drop_variables", "storage_options")
 
     ENGINE_MAP: Dict[str, str] = {
         "zarr": "zarr",

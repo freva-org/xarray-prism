@@ -241,3 +241,15 @@ def sanitize_dataset_attrs(ds):
             var.attrs = _clean_attr_obj(dict(var.attrs))
 
     return ds
+
+
+def _strip_chaining_options(storage_options: dict) -> dict:
+    """Strip fsspec chaining/wrapper protocol keys from storage_options.
+    These are keys like 'simplecache', 'blockcache', 'filecache' that are
+    fsspec protocol names used for URL chaining, not valid HTTP/remote FS kwargs.
+    """
+    if not storage_options:
+        return {}
+    from fsspec.registry import known_implementations
+
+    return {k: v for k, v in storage_options.items() if k not in known_implementations}
