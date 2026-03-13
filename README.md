@@ -168,6 +168,13 @@ xp.clear_cache(max_age_days=3, max_size_gb=2)
 xp.clear_cache(max_age_days=0, max_size_gb=0)
 ```
 
+> [!NOTE] `max_age_days` and `max_size_gb` can also be set via
+> the following environment variables:
+> | Policy | Default | Override |
+> |--------|---------|----------|
+> | TTL (last-access) | 7 days | `XARRAY_PRISM_MAX_AGE_DAYS=N` |
+> | Size cap (LRU) | 10 GB | `XARRAY_PRISM_MAX_SIZE_GB=N` |
+
 
 ## Customization
 

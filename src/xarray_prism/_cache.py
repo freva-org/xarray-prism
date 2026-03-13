@@ -14,6 +14,9 @@ from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
+MAX_AGE_DAYS = float(os.environ.get("XARRAY_PRISM_MAX_AGE_DAYS", 7))
+MAX_SIZE_GB = float(os.environ.get("XARRAY_PRISM_MAX_SIZE_GB", 10))
+
 
 def get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
     """Resolve cache directory (env var > storage_options > system temp)."""
@@ -100,8 +103,8 @@ def cache_remote_file(
 
 
 def clear_cache(
-    max_age_days: Optional[float] = 7,
-    max_size_gb: Optional[float] = 10,
+    max_age_days: Optional[float] = MAX_AGE_DAYS,
+    max_size_gb: Optional[float] = MAX_SIZE_GB,
     dry_run: bool = False,
 ) -> dict:
     """
