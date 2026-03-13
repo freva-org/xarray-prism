@@ -137,9 +137,9 @@ xr.open_dataset(
 > 
 > Unlike Zarr or HDF5, these formats don't support partial/chunk reads over the network.
 > 
-> By default, xarray-prism caches files in the system temp directory. 
-> This works well for most cases. 
-> If temp storage is a concern (e.g., limited space or cleared on reboot), 
+> By default, xarray-prism caches files in the system temp directory.
+> This works well for most cases.
+> If temp storage is a concern (e.g., limited space or cleared on reboot),
 > you can specify a persistent cache:
 > 
 > | Option | How |
@@ -150,14 +150,7 @@ xr.open_dataset(
 
 ### Cache management
 
-The cache is evicted automatically after each new download using two policies:
-
-| Policy | Default | Override |
-|--------|---------|----------|
-| TTL (last-access) | 7 days | `XARRAY_PRISM_MAX_AGE_DAYS=N` |
-| Size cap (LRU) | 10 GB | `XARRAY_PRISM_MAX_SIZE_GB=N` |
-
-You can also inspect or evict the cache manually:
+You can inspect or evict the cache manually:
 
 ```python
 import xarray_prism as xp
