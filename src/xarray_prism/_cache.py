@@ -99,34 +99,7 @@ def cache_remote_file(
     else:
         fs.get(path, str(local_path))
 
-    _maybe_evict(cache_root)
     return str(local_path)
-
-
-def _maybe_evict(cache: Path) -> None:
-    """Cheap guard: Run full eviction
-    if thresholds are breached."""
-    try:
-        files = list(cache.iterdir())
-        if not files:
-            return
-        total = sum(f.stat().st_size for f in files)
-        oldest_atime = min(f.stat().st_atime for f in files)
-
-        age_breach = (time.time() - oldest_atime) > MAX_AGE_DAYS * 86_400
-        size_breach = total > MAX_SIZE_GB * 1024**3
-
-        if age_breach or size_breach:
-            result = clear_cache(MAX_AGE_DAYS, MAX_SIZE_GB)
-            if result["removed"]:
-                freed_mb = result["freed_bytes"] / 1024**2
-                logger.info(
-                    "Cache eviction: removed %d file(s), freed %.1f MB",
-                    len(result["removed"]),
-                    freed_mb,
-                )
-    except Exception:
-        pass  # never housekeeping breaks a data load
 
 
 def clear_cache(
