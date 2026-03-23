@@ -51,7 +51,7 @@ def cache_remote_file(
     """Cache remote file to local."""
     import fsspec
 
-    from ..utils import ProgressBar
+    from .utils import ProgressBar
 
     cache_root = get_cache_dir(storage_options)
     parsed = urlparse(uri)
