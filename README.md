@@ -168,7 +168,8 @@ xp.clear_cache(max_age_days=3, max_size_gb=2)
 xp.clear_cache(max_age_days=0, max_size_gb=0)
 ```
 
-> [!NOTE] `max_age_days` and `max_size_gb` can also be set via
+> [!NOTE]
+> `max_age_days` and `max_size_gb` can also be set via
 > the following environment variables:
 > | Policy | Default | Override |
 > |--------|---------|----------|
