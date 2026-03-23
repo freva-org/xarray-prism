@@ -4,11 +4,21 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import bz2
+import gzip
+import tempfile
 
 import pytest
 import xarray as xr
 
 from xarray_prism.backends import open_cloud, open_posix
+from xarray_prism import PrismBackendEntrypoint
+from xarray_prism._detection import _detect_from_magic_bytes, _detect_from_uri_pattern
+from xarray_prism.utils import (
+    _decompress_if_needed,
+    _strip_chaining_options,
+    _strip_compression_suffix,
+)
 
 
 class TestPosixBackend:
@@ -201,3 +211,135 @@ class TestCacheConfiguration:
         cache_dir = _get_cache_dir()
         assert cache_dir.parent == Path(tempfile.gettempdir())
         assert "xarray-prism-cache" in str(cache_dir)
+
+
+class TestStripCompressionSuffix:
+    def test_strips_bz2(self):
+        assert _strip_compression_suffix("file.grib2.bz2") == "file.grib2"
+
+    def test_strips_gz(self):
+        assert _strip_compression_suffix("file.nc.gz") == "file.nc"
+
+    def test_strips_xz(self):
+        assert _strip_compression_suffix("file.nc.xz") == "file.nc"
+
+    def test_no_suffix_unchanged(self):
+        assert _strip_compression_suffix("file.grib2") == "file.grib2"
+
+    def test_only_strips_last_suffix(self):
+        assert _strip_compression_suffix("file.grib2.bz2.bz2") == "file.grib2.bz2"
+
+
+class TestStripChainingOptions:
+    def test_strips_simplecache(self):
+        opts = {"simplecache": {"cache_storage": "/tmp"}, "anon": True}
+        result = _strip_chaining_options(opts)
+        assert "simplecache" not in result
+        assert result["anon"] is True
+
+    def test_strips_blockcache(self):
+        opts = {"blockcache": {}, "key": "abc"}
+        result = _strip_chaining_options(opts)
+        assert "blockcache" not in result
+        assert "key" in result
+
+    def test_strips_filecache(self):
+        opts = {"filecache": {"cache_storage": "/tmp"}}
+        result = _strip_chaining_options(opts)
+        assert "filecache" not in result
+
+    def test_empty_input(self):
+        assert _strip_chaining_options({}) == {}
+
+    def test_no_chaining_keys_unchanged(self):
+        opts = {"anon": True, "key": "abc", "secret": "xyz"}
+        assert _strip_chaining_options(opts) == opts
+
+
+class TestDetectionWithCompression:
+    def test_uri_pattern_grib2_bz2(self):
+        assert _detect_from_uri_pattern("file.grib2.bz2") == "cfgrib"
+
+    def test_uri_pattern_nc_gz(self):
+        assert _detect_from_uri_pattern("file.nc.gz") is None
+
+    def test_magic_bytes_grib_with_bz2_path(self):
+        assert _detect_from_magic_bytes(b"GRIB...", "file.grib2.bz2") == "cfgrib"
+
+    def test_magic_bytes_geotiff_with_gz_path(self):
+        assert _detect_from_magic_bytes(b"II*\x00...", "file.tif.gz") == "rasterio"
+
+
+class TestDecompressIfNeeded:
+    def test_bz2_decompressed(self):
+        content = b"GRIB test content"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            compressed = os.path.join(tmpdir, "test.grib2.bz2")
+            with bz2.open(compressed, "wb") as f:
+                f.write(content)
+
+            result = _decompress_if_needed(compressed)
+            assert result == os.path.join(tmpdir, "test.grib2")
+            assert Path(result).read_bytes() == content
+
+    def test_gz_decompressed(self):
+        content = b"CDF netcdf3 content"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            compressed = os.path.join(tmpdir, "test.nc.gz")
+            with gzip.open(compressed, "wb") as f:
+                f.write(content)
+
+            result = _decompress_if_needed(compressed)
+            assert result == os.path.join(tmpdir, "test.nc")
+            assert Path(result).read_bytes() == content
+
+    def test_no_compression_unchanged(self):
+        with tempfile.NamedTemporaryFile(suffix=".grib2", delete=False) as f:
+            f.write(b"GRIB content")
+            path = f.name
+        try:
+            assert _decompress_if_needed(path) == path
+        finally:
+            os.unlink(path)
+
+    def test_idempotent_second_call(self):
+        """Second call should not re-decompress."""
+        content = b"GRIB test"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            compressed = os.path.join(tmpdir, "test.grib2.bz2")
+            with bz2.open(compressed, "wb") as f:
+                f.write(content)
+
+            result1 = _decompress_if_needed(compressed)
+            mtime1 = os.path.getmtime(result1)
+            result2 = _decompress_if_needed(compressed)
+            assert os.path.getmtime(result2) == mtime1  # file not rewritten
+
+    def test_custom_output_dir(self):
+        content = b"GRIB test"
+        with tempfile.TemporaryDirectory() as src_dir:
+            with tempfile.TemporaryDirectory() as out_dir:
+                compressed = os.path.join(src_dir, "test.grib2.bz2")
+                with bz2.open(compressed, "wb") as f:
+                    f.write(content)
+
+                result = _decompress_if_needed(compressed, output_dir=out_dir)
+                assert result.startswith(out_dir)
+                assert Path(result).read_bytes() == content
+
+
+class TestOpenDatasetParametersIncludesStorageOptions:
+    def test_storage_options_in_parameters(self):
+        """storage_options must be in open_dataset_parameters so xarray forwards it."""
+        entrypoint = PrismBackendEntrypoint()
+        assert "storage_options" in entrypoint.open_dataset_parameters
+
+
+class TestGuessCanOpenCompressed:
+    def test_grib2_bz2(self):
+        ep = PrismBackendEntrypoint()
+        assert ep.guess_can_open("forecast.grib2.bz2") is True
+
+    def test_nc_gz(self):
+        ep = PrismBackendEntrypoint()
+        assert ep.guess_can_open("data.nc.gz") is True
