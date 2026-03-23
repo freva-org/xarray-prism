@@ -5,6 +5,8 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
+from .utils import _strip_chaining_options, _strip_compression_suffix
+
 Detector = Callable[[str], Optional[str]]
 
 _custom_detectors: List[Tuple[int, Detector]] = []
@@ -145,6 +147,9 @@ def looks_like_opendap_url(uri: str) -> bool:
 
 def _detect_from_uri_pattern(lower_uri: str) -> Optional[str]:
     """Detect engine from URI patterns without I/O."""
+
+    lower_uri = _strip_compression_suffix(lower_uri)
+
     # Reference URIs -> zarr (Kerchunk)
     if is_reference_uri(lower_uri):
         return "zarr"
@@ -152,6 +157,10 @@ def _detect_from_uri_pattern(lower_uri: str) -> Optional[str]:
     # Zarr detection by extension
     if lower_uri.endswith(".zarr") or ".zarr/" in lower_uri:
         return "zarr"
+
+    # GRIB detection by extension
+    if lower_uri.endswith((".grib", ".grb", ".grb2", ".grib2")):
+        return "cfgrib"
 
     # THREDDS NCSS with explicit accept format (overrides file extension)
     if "/ncss/" in lower_uri or "/ncss?" in lower_uri:
@@ -202,8 +211,10 @@ def _read_magic_bytes(fs: Any, path: str) -> Any:
 
 def _detect_from_magic_bytes(header: bytes, lower_path: str) -> Engine:
     """Detect engine from magic bytes and file extension."""
+    bare_path = _strip_compression_suffix(lower_path)
+
     # GRIB detection
-    if b"GRIB" in header or lower_path.endswith((".grib", ".grb", ".grb2", ".grib2")):
+    if b"GRIB" in header or bare_path.endswith((".grib", ".grb", ".grb2", ".grib2")):
         return "cfgrib"
 
     # NetCDF3 (Classic)
@@ -217,7 +228,7 @@ def _detect_from_magic_bytes(header: bytes, lower_path: str) -> Engine:
     # GeoTIFF
     if header.startswith((b"II*\x00", b"MM\x00*")):
         return "rasterio"
-    if lower_path.endswith((".tif", ".tiff")):
+    if bare_path.endswith((".tif", ".tiff")):
         return "rasterio"
 
     return "unknown"
@@ -259,7 +270,10 @@ def _detect_engine_impl(uri: str, storage_options: Optional[Dict]) -> str:
     # 3. Filesystem-based detection — lazy import fsspec only when needed
     import fsspec  # noqa: PLC0415
 
-    fs, path = fsspec.core.url_to_fs(uri, **(storage_options or {}))
+    fs, path = fsspec.core.url_to_fs(
+        uri, **_strip_chaining_options(storage_options or {})
+    )
+
     lower_path = path.lower()
 
     # Check for Zarr directory

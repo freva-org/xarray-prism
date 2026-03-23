@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Dict, Optional
 from urllib.parse import urlparse
 
+from .utils import _decompress_if_needed, _strip_chaining_options
+
 logger = logging.getLogger(__name__)
 
 MAX_AGE_DAYS = float(os.environ.get("XARRAY_PRISM_MAX_AGE_DAYS", 7))
@@ -19,9 +21,9 @@ MAX_SIZE_GB = float(os.environ.get("XARRAY_PRISM_MAX_SIZE_GB", 10))
 
 
 def get_cache_dir(storage_options: Optional[Dict] = None) -> Path:
-    """Resolve cache directory (env var > storage_options > system temp)."""
-    # 1. Environment variable
+    """Get cache directory."""
     env_cache = os.environ.get("XARRAY_PRISM_CACHE")
+    # 1. Environment variable
     if env_cache:
         cache_root = Path(env_cache)
         cache_root.mkdir(parents=True, exist_ok=True)
@@ -46,10 +48,10 @@ def cache_remote_file(
     show_progress: bool = True,
     lines_above: int = 0,
 ) -> str:
-    """Download a remote file into the local cache and return its path."""
+    """Cache remote file to local."""
     import fsspec
 
-    from .utils import ProgressBar
+    from ..utils import ProgressBar
 
     cache_root = get_cache_dir(storage_options)
     parsed = urlparse(uri)
@@ -63,7 +65,7 @@ def cache_remote_file(
                 sys.stdout.write("\033[A")
                 sys.stdout.write("\033[K")
             sys.stdout.flush()
-        return str(local_path)
+        return _decompress_if_needed(str(local_path))
 
     extra_lines = 0
     if show_progress:
@@ -71,7 +73,9 @@ def cache_remote_file(
         logger.warning(f"Remote {fmt} requires full file download")
         extra_lines = 2
 
-    fs, path = fsspec.core.url_to_fs(uri, **(storage_options or {}))
+    fs, path = fsspec.core.url_to_fs(
+        uri, **_strip_chaining_options(storage_options or {})
+    )
 
     if show_progress:
         size = 0
@@ -83,11 +87,9 @@ def cache_remote_file(
         display_name = Path(parsed.path).name
         if len(display_name) > 35:
             display_name = display_name[:32] + "..."
+        desc = f" Downloading {display_name}"
 
-        with ProgressBar(
-            desc=f" Downloading {display_name}",
-            lines_above=lines_above + extra_lines,
-        ) as progress:
+        with ProgressBar(desc=desc, lines_above=lines_above + extra_lines) as progress:
             progress.set_size(size)
             with fs.open(path, "rb") as src, open(local_path, "wb") as dst:
                 while True:
@@ -99,7 +101,7 @@ def cache_remote_file(
     else:
         fs.get(path, str(local_path))
 
-    return str(local_path)
+    return _decompress_if_needed(str(local_path))
 
 
 def clear_cache(
