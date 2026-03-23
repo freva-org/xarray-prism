@@ -4,8 +4,6 @@ All notable changes to this project will be documented in this file.
 ## [v2603.0.0]
 ## Fixed
 - an issue regading passing the storage_options to aiohttp
-
-## [v2603.0.0]
 ### Added
 - Cache cleanup strategy to evict automatically
 
